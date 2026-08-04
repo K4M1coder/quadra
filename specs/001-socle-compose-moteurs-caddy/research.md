@@ -34,8 +34,12 @@ repoussé sur un autre contenu — l'épinglage par tag donne l'illusion de la r
 propriété. Surtout, le digest est **la condition du canari et du retour arrière** : sans lui, « revenir
 à la version d'avant » n'a pas de référent.
 
-**Conséquence pratique** : un fichier unique porte la correspondance composant → digest, de sorte que
-la montée de version soit un changement localisé et revuable (Art. 19).
+**Conséquence pratique** : un fichier unique (`deploy/digests.yml`) porte la correspondance
+composant → digest, de sorte que la montée de version soit un changement localisé et revuable
+(Art. 19). C'est aussi le **seul** fichier que le retour arrière modifie : re-pointer le digest
+précédemment épinglé, redémarrer, une commande, aucune reconstruction (FR-021, prouvé par SC-010).
+`w10` écrit « re-pointer le tag précédent » ; le référent retenu ici est le **digest**, ce qui est plus
+strict et ne change pas la procédure.
 
 **Alternatives considérées** :
 
@@ -48,16 +52,17 @@ la montée de version soit un changement localisé et revuable (Art. 19).
 
 ## D-S01-3 — Un seul port publié, réseau interne isolé
 
-**Décision** : seul le reverse proxy publie un port sur l'hôte. Tous les autres services communiquent
-sur un réseau interne à la composition, **sans publication**.
+**Décision** : seul le reverse proxy `caddy` publie un port sur l'hôte — 443. Tous les autres services
+communiquent sur le réseau interne `quadra-net`, **sans publication**.
 
 **Rationale** : critère A2. Les moteurs d'inférence **n'exposent ni authentification ni TLS** — c'est
 une propriété de l'amont, pas un défaut à corriger (Art. 6). La seule protection correcte est donc
 l'isolation réseau. Publier un port de moteur, même « seulement en local », exposerait une inférence
 non authentifiée.
 
-**Vérification** : automatisable — un balayage des ports de l'hôte ne doit trouver que le port TLS
-(T10).
+**Vérification** : automatisable — un balayage des ports de l'hôte ne doit trouver, **parmi les ports
+des services de la pile**, que 443 (réf. `9f` T10, SC-002). Le statut de SSH, service de l'hôte, reste
+un arbitrage ouvert de `spec.md` et ne relève pas de ce critère.
 
 ---
 
@@ -71,8 +76,10 @@ un validateur en script pour S01 puis un second en Python pour S04 créerait deu
 mêmes variables. Le coût d'anticipation est nul — c'est le même besoin, pas une abstraction
 spéculative (donc pas une violation de l'Art. 20).
 
-**Comportement exigé** : échec en moins de 10 secondes, message nommant **la variable fautive et la
-correction attendue**, et **aucun service laissé démarré** (SC-006).
+**Comportement exigé** : le démarrage **s'interrompt**, le message nomme **la variable fautive et la
+correction attendue**, et **aucun service n'est laissé démarré** (FR-015, SC-006). **Aucun délai
+chiffré n'est exigé** : ni la fiche `9f`, ni `10b`, ni la constitution n'en fixent un, et SC-006 est
+vérifiable sans. Ne pas en introduire un.
 
 **Alternatives considérées** :
 
@@ -94,27 +101,66 @@ définition de déploiement de S01 contiendrait des cibles de collecte, ce qui a
 
 ---
 
-## D-S01-6 — Volume d'offload provisionné mais non monté
+## D-S01-6 — `/data/offload` provisionné mais non monté
 
-**Décision** : le volume dédié au débordement mémoire est **créé** par S01 et **monté par aucun
-moteur**.
+**Décision** : le volume `/data/offload` est **créé** par S01 et **monté par aucun moteur**.
 
-**Rationale** : le document le prévoit dans le déploiement de référence, mais l'Art. 3 impose que
-l'offload soit opt-in par job (S18) et l'Art. 20 interdit d'implémenter le mécanisme avant le jalon
-qui l'exige. Provisionner le stockage est une décision d'infrastructure ; l'activer est une décision
-produit. Les deux sont séparées.
+**Rationale** : `5b` le prévoit dans le déploiement de référence, mais l'Art. 3 impose que l'`offload`
+soit opt-in par job (S18) et l'Art. 20 interdit d'implémenter le mécanisme avant le jalon qui l'exige.
+Provisionner le stockage est une décision d'infrastructure ; l'activer est une décision produit. Les
+deux sont séparées.
+
+**Réserve** : la lettre de l'Art. 20 proscrit toute anticipation, y compris celle-ci. La provision est
+donc **consignée comme réserve** au Constitution Check de `plan.md` (ligne Art. 20) et adressée au
+mainteneur, plutôt que présentée comme conforme.
+
+---
+
+## D-S01-7 — Fichiers de gouvernance à la racine
+
+**Décision** : `CONSTITUTION.md` et `CHANGELOG.md` vivent **à la racine** du dépôt et sont livrés par
+S01, avec l'arborescence et le README (réf. `9f` T1).
+
+**Rationale** : `10b` fixe la racine du dépôt — « `CONSTITUTION.md` · `CHANGELOG.md` (Keep a
+Changelog) » — et le § Governance de la constitution confie explicitement la production de
+`CONSTITUTION.md` à S01. L'Art. 13 exige le changelog dans le changement même qui livre le
+comportement.
+
+**Conséquence Art. 19** : `CONSTITUTION.md` est une **copie de référence**, jamais un original ; sa
+source est `.specify/memory/constitution.md`. Les deux copies portent la même version et un
+contrôle automatisé échoue à la moindre divergence (FR-019, SC-008). Amender la constitution passe par
+l'outil de gouvernance, jamais par la copie.
+
+**Alternative considérée** : *une seule copie, la source uniquement* — écarté : `10b` impose la
+racine, et c'est la copie de racine qui est injectée dans le contexte des agents. La duplication est
+donc contrainte, ce qui rend le contrôle d'égalité de version obligatoire plutôt qu'optionnel.
+
+---
+
+## Décisions de la veille transverse applicables à S01
+
+Les six décisions D1–D6 de `specs/RESEARCH-STACK.md` §7 ont été **tranchées le 2026-08-01**. Elles ne
+sont pas recopiées ici (Art. 19) :
+
+| Réf | Portée | Effet sur S01 |
+| --- | --- | --- |
+| **D1** | Postgres, Redis, Grafana, Prometheus, Caddy, React | **s'applique** — versions retenues dans `plan.md` |
+| **D2** | pilote GPU / CUDA (560 / 12.6) | **s'applique** — conservées, révision au canari seulement |
+| **D3** · **D4** | tenue mémoire (S09) | ne couvre pas S01 |
+| **D5** | classement de l'arène (S16) | ne couvre pas S01 |
+| **D6** | surface des lots (S04, S18) | ne couvre pas S01 |
 
 ---
 
 ## Points laissés ouverts — arbitrage mainteneur
 
-Repris de la veille transverse, rappelés ici car ils **bloquent la rédaction de la définition de
-déploiement** :
+Ils **bloquent la rédaction de la définition de déploiement** ; `spec.md` § « Arbitrages ouverts » en
+est la source.
 
-| Réf | Question | Effet si non tranché |
-| --- | --- | --- |
-| **D1** | Épingler l'amont actuel (Postgres 18.4, Redis 8.8+, Grafana 13, Prometheus 3.13 LTS) ou les versions du document (16, 7, 11, 2) ? | La composition ne peut pas être écrite : ce sont les digests qu'elle contient. |
-| **D2** | Confirmer le maintien du pilote GPU / CUDA épinglés (**recommandé**) ? | Risque de convertir le risque connu de la phase 1 en panne inexpliquée. |
+| Point | Effet si non tranché |
+| --- | --- |
+| **Version de `dcgm-exporter`** — `5a` n'en épingle aucune et la portée de D1 ne couvre pas ce composant | Son service ne peut pas être écrit : FR-012 exige un digest exact pour **toute** image. Écrire une borne ouverte violerait l'Art. 11 dans le fichier même qui porte le critère A3. |
+| **Tag `llama.cpp b4102`** — « à revérifier » (`RESEARCH-STACK.md` §1) | Si le tag n'existe plus, FR-013 devient vrai au premier démarrage et le critère A1 échoue pour une cause documentaire. |
 
-Aucun autre `NEEDS CLARIFICATION` ne subsiste : la spec S01 n'en comportait aucun, et les six
-décisions ci-dessus sont tranchées.
+Aucun `NEEDS CLARIFICATION` ne subsiste : la spec S01 n'en comportait aucun, et les sept décisions
+ci-dessus sont tranchées.

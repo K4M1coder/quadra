@@ -33,7 +33,8 @@ qu'aucun moteur d'inférence soit requis.
 
 1. **Given** une machine vierge disposant seulement du moteur de conteneurs, **When** le développeur
    clone le dépôt et consulte le README racine, **Then** il identifie sans ambiguïté le rôle de
-   chaque répertoire de premier niveau (plan de contrôle, interface, déploiement, documentation).
+   chaque répertoire de premier niveau (`gateway/`, `ui/`, `deploy/`, `docs/`) et trouve à la racine
+   `CONSTITUTION.md` — la constitution qui gouverne tout travail sur le dépôt — et `CHANGELOG.md`.
 2. **Given** le dépôt cloné, **When** le développeur démarre les services de données, **Then** la
    base relationnelle et le cache atteignent l'état sain et leurs données persistent dans des
    volumes nommés.
@@ -53,7 +54,7 @@ M0 (« stack verte sur machine vierge »). Elle est vérifiable seule dès que J
 
 **Independent Test**: sur la machine de référence à 4 GPUs, exécuter la commande de démarrage unique
 et constater que tous les services atteignent l'état sain, que le point d'entrée TLS répond, et
-qu'aucun port de moteur n'est joignable depuis l'extérieur du réseau interne.
+qu'aucun port de moteur n'est joignable depuis l'extérieur du réseau interne `quadra-net`.
 
 **Acceptance Scenarios**:
 
@@ -61,11 +62,12 @@ qu'aucun port de moteur n'est joignable depuis l'extérieur du réseau interne.
    la commande de démarrage unique, **Then** l'ensemble des services atteint l'état sain en moins de
    5 minutes.
 2. **Given** la pile démarrée, **When** un client externe tente de joindre directement un moteur
-   d'inférence sur son port, **Then** la connexion échoue — seul le port TLS 443 est joignable depuis
-   l'extérieur.
-3. **Given** la pile démarrée, **When** un client interroge les routes publiées (inférence,
-   administration, temps réel, tableaux de bord), **Then** le reverse proxy les achemine vers le bon
-   service avec un certificat TLS valide.
+   d'inférence sur son port, **Then** la connexion échoue — parmi les services de la pile, le port
+   TLS 443 de `caddy` est le seul qui sorte du réseau `quadra-net` (réf. `5b` § Sécurité, qui place
+   à côté de lui le seul autre accès sortant de l'hôte, SSH, hors périmètre de la pile).
+3. **Given** la pile démarrée, **When** un client interroge les routes publiées `/v1` (inférence),
+   `/api` (administration), `/ws` (temps réel) et `/grafana` (tableaux de bord), **Then** le reverse
+   proxy les achemine vers le bon service avec un certificat TLS valide.
 4. **Given** un service qui échoue au démarrage, **When** sa sonde de santé reste rouge, **Then** les
    services qui en dépendent ne sont pas déclarés sains et le service est redémarré selon sa
    politique de redémarrage.
@@ -85,14 +87,14 @@ rend l'installation reproductible par quelqu'un d'autre que l'auteur — exigenc
 (opérable par un seul) et condition de la preuve J4 sur machine vierge.
 
 **Independent Test**: donner à une personne n'ayant jamais vu le projet la documentation
-d'installation et un exemplaire du fichier d'environnement d'exemple, et constater qu'elle atteint la
+d'installation et une copie du fichier d'environnement d'exemple, et constater qu'elle atteint la
 pile saine sans poser de question.
 
 **Acceptance Scenarios**:
 
-1. **Given** le dépôt cloné, **When** l'administrateur copie le fichier d'environnement d'exemple,
-   **Then** chaque variable requise y figure avec sa description et, quand elle existe, sa valeur par
-   défaut.
+1. **Given** le dépôt cloné, **When** l'administrateur copie `.env.example` en `.env`, **Then**
+   chaque variable requise y figure — nommée en UPPER_SNAKE et préfixée `QUADRA_` (convention `10b`)
+   — avec sa description et, quand elle existe, sa valeur par défaut.
 2. **Given** un fichier d'environnement auquel il manque une variable requise ou dont une valeur est
    invalide, **When** l'administrateur démarre la pile, **Then** le démarrage s'interrompt
    immédiatement avec un message nommant la variable fautive et la correction attendue — la pile ne
@@ -107,17 +109,12 @@ pile saine sans poser de question.
 
 ### Edge Cases
 
-- **Le port 443 est déjà occupé sur l'hôte** : le démarrage échoue explicitement en nommant le
-  conflit, plutôt que de laisser un reverse proxy en boucle de redémarrage silencieuse.
-- **Le pilote GPU ou le toolkit conteneur est absent ou d'une version non validée** : les services
-  qui n'exigent pas de GPU (bases, observabilité, reverse proxy) démarrent quand même, et les
-  services moteurs signalent une erreur nommant la combinaison pilote/CUDA attendue. Ce point est le
-  risque identifié de la phase 1 (« une seule combinaison validée »).
-- **L'espace disque des volumes de données est insuffisant** : le démarrage le signale avant
-  d'écrire, plutôt que d'échouer à mi-course.
 - **Un digest d'image épinglé n'est plus disponible au registre** : le démarrage échoue en nommant
   l'image et son digest attendu ; aucune substitution automatique par une version plus récente n'est
   tentée (Art. 11).
+- **Une image épinglée se révèle défaillante après bascule** : le retour arrière consiste à re-pointer
+  le digest précédent puis à redémarrer, en une commande — pas de reconstruction, pas d'autre fichier
+  touché (réf. `w10` ; Art. 9, Art. 11).
 - **Une sonde de santé ne devient jamais verte dans le délai imparti** : le service est marqué en
   échec et la commande de démarrage rend la main avec un état non nul, plutôt que d'attendre
   indéfiniment.
@@ -130,17 +127,29 @@ pile saine sans poser de question.
 
 ### Functional Requirements
 
+*Les identifiants FR sont stables : les exigences ajoutées par amendement (FR-019 à FR-021) sont
+placées dans leur section thématique **sans renumérotation** des exigences existantes, que les
+artefacts dépendants référencent par identifiant (Art. 19).*
+
 #### Arborescence et amorçage (J1)
 
 - **FR-001**: Le dépôt DOIT présenter une arborescence de premier niveau stable séparant le plan de
-  contrôle, l'interface utilisateur, les artefacts de déploiement et la documentation.
+  contrôle (`gateway/`), l'interface utilisateur (`ui/`), les artefacts de déploiement (`deploy/`) et
+  la documentation (`docs/`).
 - **FR-002**: Le dépôt DOIT fournir un README racine décrivant le rôle de chaque répertoire de
   premier niveau et la commande d'amorçage.
+- **FR-019**: Le dépôt DOIT porter à sa racine `CONSTITUTION.md`, copie de référence de la
+  constitution ratifiée — dont `.specify/memory/constitution.md` est la source (Art. 19) — destinée
+  à être injectée dans le contexte de chaque agent avant tout travail. Les deux copies DOIVENT
+  porter la même version.
+- **FR-020**: Le dépôt DOIT porter à sa racine `CHANGELOG.md` au format Keep a Changelog et versionné
+  en SemVer (Art. 13, convention `10b`), et le changement qui livre S01 DOIT y figurer.
 - **FR-003**: Le système DOIT fournir une base de données relationnelle et un cache démarrables
   indépendamment des moteurs d'inférence, chacun avec sa sonde de santé.
 - **FR-004**: Toute donnée persistante DOIT être stockée dans des volumes nommés, distincts par
-  usage (données relationnelles, données de métriques, modèles, offload), et survivre à l'arrêt et
-  au redémarrage de la pile.
+  usage (`pgdata` pour les données relationnelles, `promdata` pour les données de métriques,
+  `/data/models` pour les modèles, `/data/offload` pour l'offload), et survivre à l'arrêt et au
+  redémarrage de la pile.
 
 #### Démarrage unifié et exposition réseau (J2)
 
@@ -149,12 +158,12 @@ pile saine sans poser de question.
 - **FR-006**: Le système NE DOIT publier vers l'extérieur que le port TLS 443. Aucun port de moteur
   d'inférence, de base de données, de cache ou de composant d'observabilité NE DOIT être publié sur
   l'hôte.
-- **FR-007**: Les moteurs d'inférence DOIVENT être joignables uniquement depuis le réseau interne de
-  la pile ; ils n'exposent ni authentification ni TLS et ne doivent donc jamais être atteignables
+- **FR-007**: Les moteurs d'inférence DOIVENT être joignables uniquement depuis le réseau interne
+  `quadra-net` ; ils n'exposent ni authentification ni TLS et ne doivent donc jamais être atteignables
   hors de ce réseau.
 - **FR-008**: Le reverse proxy DOIT obtenir et renouveler automatiquement son certificat TLS, et
-  acheminer les routes publiques d'inférence, d'administration, de temps réel et de tableaux de bord
-  vers les services correspondants.
+  acheminer les routes publiées `/v1` (inférence), `/api` (administration), `/ws` (temps réel) et
+  `/grafana` (tableaux de bord) vers les services correspondants.
 - **FR-009**: Chaque service DOIT déclarer une sonde de santé, et les services dépendants NE DOIVENT
   être considérés comme démarrés qu'une fois leurs dépendances saines.
 - **FR-010**: Chaque service DOIT déclarer une politique de redémarrage assurant la reprise
@@ -170,12 +179,21 @@ pile saine sans poser de question.
   autorisée.
 - **FR-013**: Le démarrage DOIT échouer explicitement si une image référencée n'est pas disponible
   au digest attendu, sans jamais substituer une autre version.
+- **FR-021**: Le retour arrière d'un service de la pile DOIT s'obtenir en re-pointant, dans le fichier
+  de digests du dépôt, le digest précédemment épinglé, puis en redémarrant le service par **une seule
+  commande** — sans reconstruction d'image, sans modification d'aucun autre fichier, et sans
+  substitution d'une version autre que celle précédemment épinglée (réf. `w10` ; Art. 9, Art. 11 —
+  l'épinglage est la condition du retour arrière). La version effectivement en service DOIT être
+  lisible depuis la définition de déploiement ; son affichage dans une vue de santé (`6g`) relève de
+  S21.
 
 #### Configuration et exploitation (J3)
 
-- **FR-014**: Le système DOIT être configurable par un unique fichier d'environnement, accompagné
-  d'un exemplaire d'exemple exhaustif documentant chaque variable, son rôle et sa valeur par défaut
-  quand elle existe.
+- **FR-014**: Le système DOIT être configurable par un unique fichier d'environnement `.env`,
+  accompagné d'un `.env.example` exhaustif documentant chaque variable, son rôle et sa valeur par
+  défaut quand elle existe. Toute variable de configuration DOIT être nommée en UPPER_SNAKE et
+  préfixée `QUADRA_` (convention `10b`) ; aucun autre espace de noms N'EST autorisé pour les
+  variables propres à la plateforme.
 - **FR-015**: Le système DOIT valider la configuration au démarrage et interrompre celui-ci avec un
   message nommant la variable fautive et la correction attendue lorsqu'une variable requise est
   absente ou invalide.
@@ -211,12 +229,14 @@ Cette spec ne crée aucune entité du domaine métier ; elle fixe des objets de 
 - **Service de la pile** : unité déployable du socle (reverse proxy, moteur d'inférence, base
   relationnelle, cache, collecte de métriques, routage d'alertes, tableaux de bord, exportateur GPU).
   Attributs : image épinglée par digest, sonde de santé, politique de redémarrage, dépendances.
-- **Volume nommé** : espace de stockage persistant distinct par usage — modèles, offload (opt-in,
-  inutilisé par défaut), données relationnelles, données de métriques.
-- **Route publiée** : correspondance entre un chemin exposé sur le point d'entrée TLS et le service
-  interne qui le sert (inférence, administration, temps réel, tableaux de bord).
-- **Variable d'environnement** : paramètre de configuration nommé, documenté dans l'exemplaire
-  d'exemple, validé au démarrage.
+- **Volume nommé** : espace de stockage persistant distinct par usage — `/data/models`,
+  `/data/offload` (opt-in, inutilisé par défaut), `pgdata`, `promdata`.
+- **Route publiée** : correspondance entre un chemin exposé sur le point d'entrée TLS (`/v1`, `/api`,
+  `/ws`, `/grafana`) et le service interne qui le sert.
+- **Variable d'environnement** : paramètre de configuration nommé en UPPER_SNAKE préfixé `QUADRA_`,
+  documenté dans `.env.example`, validé au démarrage.
+- **Fichier de gouvernance à la racine** : `CONSTITUTION.md` (copie de référence de la constitution,
+  même version que sa source) et `CHANGELOG.md` (Keep a Changelog + SemVer).
 
 ## Success Criteria *(mandatory)*
 
@@ -234,11 +254,20 @@ Cette spec ne crée aucune entité du domaine métier ; elle fixe des objets de 
   documentation d'installation, **sans poser de question** au mainteneur.
 - **SC-005**: Après un redémarrage de la machine, la pile retrouve l'état sain **sans intervention
   manuelle**.
-- **SC-006**: Un démarrage avec une variable de configuration requise absente ou invalide échoue en
-  **moins de 10 secondes** avec un message nommant la variable fautive, et **aucun service** n'est
-  laissé démarré à moitié configuré.
+- **SC-006**: Un démarrage avec une variable de configuration requise absente ou invalide **est
+  refusé** : la validation interrompt le démarrage, **nomme la variable fautive** et la correction
+  attendue, et **aucun service** n'est laissé démarré — la pile ne démarre jamais à moitié
+  configurée.
 - **SC-007**: Les données écrites dans les volumes nommés survivent à **100 %** des cycles
   arrêt/redémarrage de la pile.
+- **SC-008**: Le dépôt cloné porte à sa racine `CONSTITUTION.md`, et la version qu'il déclare est
+  **identique** à celle de sa source `.specify/memory/constitution.md` — une inspection automatisée
+  compare les deux et échoue à la moindre divergence.
+- **SC-009**: Le dépôt cloné porte à sa racine `CHANGELOG.md` au format Keep a Changelog, et
+  l'entrée du changement qui livre S01 y figure (Art. 13).
+- **SC-010**: Le retour arrière d'un service vers le digest précédemment épinglé s'obtient par **une
+  seule commande** et la pile retrouve l'état sain, sans reconstruction d'image et sans modification
+  d'aucun fichier autre que celui qui porte les digests.
 
 ### Traçabilité critère → preuve
 
@@ -250,7 +279,9 @@ la fiche 9f :
 | A1 — pile saine en < 5 min, healthchecks verts | SC-001, SC-005, SC-007 | T10 `[TEST]` vierge → verte < 5 min |
 | A2 — seul :443 exposé, moteurs invisibles | SC-002 | T10 `[TEST]` vérification des ports |
 | A3 — toute version épinglée | SC-003 | T10 `[TEST]` vérification des digests |
-| Exigences de surface (J3) | SC-004, SC-006 | T7 validation au boot · T9 documentation d'installation |
+| Exigences de surface (J3) | SC-004, SC-006 | T7 validation au boot · T9 documentation d'installation — **tâches d'implémentation, ce que l'Art. 8 interdit** : ce sont les **objets sous test**, pas la preuve. Les preuves sont les tâches `[TEST]` **T014** (démarrage refusé sur configuration invalide, SC-006) et **T015** (installation par un tiers, SC-004) de `tasks.md` — **écart documentaire, Art. 7**, amendement dû sur cette ligne et sur la fiche `9f` |
+| Fichiers de gouvernance à la racine (`10b`, Art. 13, § Governance) | SC-008, SC-009 | tâche `[TEST]` de vérification des fichiers de racine — **aucune tâche de la fiche `9f` ne la porte** : à créer dans `tasks.md` (écart documentaire, Art. 7) |
+| Retour arrière en une commande (réf. `w10`, contrat 4) | SC-010 | tâche `[TEST]` de retour arrière (J4) — la fiche `9f` ne détaille que T10 pour J4 : à créer dans `tasks.md` (écart documentaire, Art. 7) |
 
 ## Assumptions
 
@@ -260,9 +291,17 @@ la fiche 9f :
 - **Combinaison pilote/CUDA unique validée** : une seule combinaison pilote GPU / CUDA / toolkit
   conteneur est supportée et épinglée. C'est le risque identifié de la phase 1 ; toute autre
   combinaison est hors garantie.
-- **Seules sorties réseau autorisées** : le point d'entrée TLS entrant, et en sortie le
-  téléchargement de modèles depuis Hugging Face (plafonné) et la copie de sauvegarde. Aucune
-  télémétrie (Art. 1).
+- **Sortie réseau autorisée** : en entrée, le point d'entrée TLS ; **hors de l'infrastructure**, la
+  seule sortie est **le téléchargement de modèles depuis Hugging Face** (plafonné) — et rien d'autre.
+  Aucune télémétrie, jamais (Art. 1).
+- **La copie de sauvegarde n'est pas une seconde sortie autorisée** : sa destination est **dans
+  l'infrastructure** (le NAS du réseau local, à côté de `node-01`, réf. `5b`) — jamais hors site, ni
+  vers un service en nuage ; elle ne quitte donc pas le périmètre que l'Art. 1 protège, et n'en
+  élargit pas la portée. Conditions qui s'imposent à sa spécification : les `prompts` et les réponses
+  sont **exclus du dump** ; `/data/models` est **exclu** (re-téléchargeable, `checksum` en base) ; le
+  contenu est pseudonyme ; le **chiffrement au repos** est assuré sur la destination. La sauvegarde
+  elle-même — planification, vérification, restauration — relève de S21 ; S01 ne fait que ne pas
+  l'empêcher.
 - **Pas d'orchestrateur** : le socle repose sur un déploiement par composition de conteneurs sur une
   machine ; aucun orchestrateur de cluster n'est introduit sous 3 machines (Art. 9).
 - **L'offload est provisionné mais inactif** : le volume dédié existe, mais aucune fonctionnalité
@@ -273,3 +312,20 @@ la fiche 9f :
   sa configuration effective relève de S02.
 - **Dépendances** : aucune. S01 est la première spec du plan et le point d'appui de toutes les
   autres. Elle est complète au jalon produit M0.
+
+### Arbitrages ouverts *(Art. 7 — consignés, non tranchés)*
+
+Ces points ne sont pas décidables depuis les sources ; ils sont notés ici et n'engagent aucun critère
+ci-dessus.
+
+- **SSH sur la machine de référence** : `5b` § Sécurité place SSH à côté de `:443` parmi les accès qui
+  sortent du réseau compose, sans dire s'il est publié sur la machine de référence. Un balayage
+  externe y trouverait alors 443 **et** 22. SC-002 reste borné aux ports des services de la pile ; le
+  statut de SSH, service de l'hôte, est à trancher par le mainteneur.
+- **Version de `dcgm-exporter`** : FR-012 exige un digest exact pour **toute** image, y compris
+  `dcgm-exporter`, mais la décision **D1** de `specs/RESEARCH-STACK.md` ne couvre pas ce composant
+  (sa portée nomme Postgres, Redis, Grafana, Prometheus, Caddy, React). La version à épingler est à
+  trancher.
+- **Tag `llama.cpp b4102`** : `specs/RESEARCH-STACK.md` §1 le marque « à revérifier — vérifier la
+  disponibilité du tag ». À vérifier avant l'épinglage, sous peine de rendre FR-013 vrai au premier
+  démarrage.
