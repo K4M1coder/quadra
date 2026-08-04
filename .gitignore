@@ -1,0 +1,37 @@
+# --- État local Spec Kit / Claude Code ---
+.specify/extensions/.cache/
+.claude/settings.local.json
+
+# --- Secrets (Art. 21) ---
+.env
+.env.*
+!.env.example
+
+# --- Plan de contrôle : Python 3.12 ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Interface : TypeScript / Vite ---
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+
+# --- Bout en bout ---
+playwright-report/
+test-results/
+
+# --- Système & éditeurs ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
