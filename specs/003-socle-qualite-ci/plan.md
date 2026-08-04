@@ -114,6 +114,7 @@ Référence : [`specs/RESEARCH-STACK.md`](../RESEARCH-STACK.md), §7.
 | 20 | YAGNI | ✅ | Aucun test métier ici — seulement l'outillage. La matrice de permissions vient de S13, les scénarios de charge de S21. |
 | 21 | Sécurité continue | ✅ | Analyse statique + audits de dépendances + scan de secrets dans les portes ; une vulnérabilité sans correctif se documente, ne se tait pas. |
 | 22 | État de l'art | ✅ | Veille consignée ; l'écart de majeures de D1 est répercuté sur les bases éphémères. |
+| 23 | La chaîne d'abord, le local en attendant | ✅ | **Article central.** S03 **est** la chaîne dont l'Art. 23 exige la mise en place au plus tôt : elle prime sur toute fonctionnalité métier, et sa livraison est la condition de sortie du régime dégradé actuel. La topologie imposée (`NNN-slug` → `dev` → `test` → `master`) recouvre son ordre de portes sans retouche : les rangs 1 à 3 gardent l'entrée dans `dev`, les rangs 4 et 5 — qui n'existent qu'à distance (FR-013) — gardent la promotion de `test`. FR-002 et le test de parité (SC-005) sont exactement ce qui rend le régime local prédictif du régime distant. |
 
 **Verdict** : porte **franchie**. Aucun article violé. `Complexity Tracking` vide.
 
