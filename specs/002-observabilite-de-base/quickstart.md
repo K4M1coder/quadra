@@ -9,27 +9,30 @@ dérive. Aucun code d'implémentation ici.
 
 | Élément | Attendu |
 | --- | --- |
-| S01 | livrée — les conteneurs d'observabilité démarrent |
+| S01 | livrée — Prometheus, Alertmanager, Grafana et `dcgm-exporter` démarrent sur `quadra-net` |
 | Matériel | 4 cartes GPU pour le scénario 2 ; les autres scénarios n'en exigent pas |
-| Stockage de visualisation | **vide** pour le scénario 3 — c'est la condition du critère A2 |
+| Stockage Grafana | **vide** pour le scénario 3 — c'est la condition du critère A2 |
+
+Toutes les vérifications ci-dessous s'exécutent **en local** tant que S03 n'est pas livrée ; leur
+sortie capturée fait foi (Art. 23).
 
 ---
 
-## Scénario 1 — Toutes les cibles sont joignables *(critère A1)*
+## Scénario 1 — Toutes les cibles sont `up` *(critère A1)*
 
 1. Démarrer la pile.
-2. Consulter l'état des cibles de collecte.
+2. Consulter `/targets`.
 
-**Attendu** — **100 %** des cibles déclarées à l'état joignable : plan de contrôle, moteurs,
-exportateur matériel, la collecte elle-même.
+**Attendu** — **100 %** des cibles déclarées à l'état `up` : `gateway`, `node-A`, `node-B`, `node-C`,
+`dcgm-exporter`, `self`.
 
 **Prouve** : critère **A1** · FR-001, FR-002 · SC-001.
 
 ---
 
-## Scénario 2 — Mesures matérielles par carte
+## Scénario 2 — Mesures `dcgm-exporter` par carte
 
-1. Consulter les mesures de l'exportateur matériel.
+1. Consulter les mesures de `dcgm-exporter`.
 2. Observer leur fréquence de rafraîchissement.
 
 **Attendu** — température, puissance et mémoire vidéo disponibles **pour chacune des 4 cartes**,
@@ -37,19 +40,19 @@ rafraîchies au moins **une fois par seconde**.
 
 **Prouve** : FR-003, FR-004 · SC-004.
 
-> Sans GPU : la cible est signalée en échec **sans faire échouer les autres**. C'est le comportement
-> attendu (cas limite de la spec), utile sur machine de développement.
+> Sans GPU : la cible est `down` **sans faire échouer les autres**. C'est le comportement attendu
+> (cas limite de la spec), utile sur machine de développement.
 
 ---
 
-## Scénario 3 — Tableaux de bord provisionnés *(critère A2)*
+## Scénario 3 — `Dashboards` provisionnés *(critère A2)*
 
-1. Repartir d'un **stockage de visualisation vide**.
+1. Repartir d'un **stockage Grafana vide**.
 2. Démarrer la pile.
-3. Ouvrir l'outil de visualisation.
+3. Ouvrir Grafana.
 
-**Attendu** — source de données et **deux tableaux de bord** (matériel, moteurs) présents et
-alimentés, **sans aucune action manuelle**.
+**Attendu** — datasource Prometheus et **deux `Dashboards`** (`ds-gpu.json`, `ds-engines.json`)
+présents et alimentés, **sans aucune action manuelle**.
 
 **Prouve** : critère **A2** · FR-011, FR-013, FR-014 · SC-002.
 
@@ -57,9 +60,9 @@ alimentés, **sans aucune action manuelle**.
 
 ## Scénario 4 — Le dépôt fait autorité *(le contrôle le plus important)*
 
-1. Modifier un tableau de bord **à la main** dans l'interface de visualisation.
+1. Modifier un `Dashboard` **à la main** dans Grafana.
 2. Redémarrer la pile.
-3. Rouvrir le tableau de bord.
+3. Rouvrir le `Dashboard`.
 
 **Attendu** — la **définition versionnée du dépôt a été réappliquée** ; la modification manuelle **n'a
 pas survécu**.
@@ -83,33 +86,21 @@ pas survécu**.
 
 ---
 
-## Scénario 6 — Persistance
+## Scénario 6 — Persistance de `promdata`
 
 1. Arrêter la pile, la redémarrer.
 2. Interroger des mesures antérieures à l'arrêt.
 
-**Attendu** — les mesures collectées avant l'arrêt sont **toujours présentes**.
+**Attendu** — les mesures collectées avant l'arrêt sont **toujours présentes** (volume `promdata`).
 
 **Prouve** : FR-006.
 
 ---
 
-## Scénario 7 — Conformité des libellés *(Art. 1)*
+## Scénario 7 — Routage des alertes
 
-1. Exécuter le contrôle automatisé de conformité des libellés.
-2. Introduire volontairement une métrique portant un libellé à cardinalité libre.
-
-**Attendu** — le contrôle ne trouve **aucune** donnée personnelle ni valeur à cardinalité libre sur
-l'existant, et **rejette** la métrique introduite.
-
-**Prouve** : FR-010 · SC-006. Voir [`contracts/metrics.md`](./contracts/metrics.md), contrat 2.
-
----
-
-## Scénario 8 — Routage des alertes
-
-1. Provoquer une alerte.
-2. Observer son acheminement.
+1. Provoquer une alerte, la porter en `firing`.
+2. Observer son acheminement par Alertmanager.
 3. Rendre un destinataire injoignable, recommencer.
 
 **Attendu** — l'alerte atteint ses destinataires selon sa gravité, avec un contenu issu d'un gabarit
@@ -119,12 +110,12 @@ versionné ; un échec d'acheminement est **observable** et **ne fait pas dispar
 
 ---
 
-## Scénario 9 — Source unique *(Art. 19)*
+## Scénario 8 — Source unique *(Art. 19)*
 
 Inspecter les dépendances du projet.
 
 **Attendu** — **aucun** second collecteur, **aucun** second magasin de séries temporelles. Tout
-consommateur de métriques lit cette chaîne.
+consommateur de métriques lit ce Prometheus.
 
 **Prouve** : FR-007 · contrat 6.
 
@@ -134,10 +125,14 @@ consommateur de métriques lit cette chaîne.
 
 | Critère du document | Scénario | Tâche |
 | --- | --- | --- |
-| **A1** — toutes les cibles joignables | 1, 2 | T8, T7 |
-| **A2** — tableaux de bord auto-provisionnés | 3, 4 | T8 |
-| **A3** — rétention 90 j | 5 | T8 |
-| Persistance | 6 | T6 |
-| Libellés sans PII | 7 | T1 + contrôle |
-| Routage d'alertes | 8 | T5 |
-| Source unique | 9 | transverse |
+| **A1** — toutes les cibles `up` | 1, 2 | T8 `[TEST]`, T7 `[INT]` |
+| **A2** — `Dashboards` auto-provisionnés | 3, 4 | T8 `[TEST]` |
+| **A3** — rétention 90 j | 5 | T8 `[TEST]` |
+| Persistance de `promdata` | 6 | `[TEST]` de ce scénario, charge absorbée par T6 ; T6 en est l'objet, pas la preuve |
+| Routage d'alertes | 7 | `[TEST]` de ce scénario, charge absorbée par T8 ; T5 en est l'objet, pas la preuve |
+| Source unique | 8 | transverse |
+
+**Pas de scénario pour « labels = ids, jamais de PII ».** `9g` en fait une **consigne** et n'y attache
+aucune preuve (« Critères → preuves : A1–A3 → T8 ») ; à M0 aucun composant n'émet `lane`, `alias`,
+`node`, `host` ou `key_id`. La règle est portée par FR-010 et tenue par la convention `10b` et la
+revue ; la porte mécanique appartient à S03 ou S04 — voir les *Arbitrages ouverts* du plan.
