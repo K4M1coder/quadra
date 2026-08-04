@@ -1,8 +1,8 @@
 # Phase 1 — Contrat : surface de métriques et provisionnement (S02)
 
-S02 n'expose **aucune API applicative**. Ce qu'elle contracte, ce sont deux choses que **toutes les
-autres specs devront respecter** : la forme des métriques qu'elles émettent, et le fait que le dépôt
-fait autorité sur les tableaux de bord.
+S02 n'expose **aucune API applicative** et n'écrit **aucun code applicatif**. Ce qu'elle contracte,
+ce sont deux choses que **toutes les autres specs devront respecter** : la forme des métriques
+qu'elles émettent, et le fait que le dépôt fait autorité sur les `Dashboards`.
 
 Ce contrat est **transverse** : il engage S04, S05, S06, S08, S15, S19 et S20, qui émettront des
 métriques dans cette chaîne.
@@ -16,7 +16,7 @@ métriques dans cette chaîne.
 | Métrique **propre au projet** | `quadra_<entité>_<mesure>_<unité>` |
 | Métrique **empruntée à un moteur** | **inchangée**, telle qu'émise par l'amont |
 
-- `<entité>` provient de la **taxonomie du domaine** — pas d'un nom inventé (Art. 12, Art. 17).
+- `<entité>` provient de la **taxonomie du domaine** `10a` — pas d'un nom inventé (Art. 12, Art. 17).
 - `<unité>` est explicite (`_seconds`, `_total`, `_bytes`…).
 - Renommer une métrique du projet est un **amendement du vocabulaire**, pas un refactoring.
 - Renommer une métrique amont est **interdit** (Art. 6) : cela romprait la correspondance avec sa
@@ -26,33 +26,44 @@ métriques dans cette chaîne.
 
 ## Contrat 2 — Libellés : liste blanche et cardinalité bornée
 
-**Libellés autorisés** : `lane` · `alias` · `node` · `host` · `key_id`.
+**Libellés autorisés** : `lane` · `alias` · `node` · `host` · `key_id` (`10b`).
 
 | Interdiction | Raison |
 | --- | --- |
 | Donnée personnelle | Art. 1 — une série est conservée 90 jours : c'est une fuite durable |
 | Contenu de prompt, même tronqué | Art. 1 |
-| Identifiant de requête | cardinalité non bornée — fait exploser le stockage |
+| Identifiant de requête | cardinalité non bornée — fait exploser `promdata` |
 | Adresse, chemin, texte saisi | cardinalité non bornée |
 
-**Application** : contrôle **mécanique** en intégration continue (Art. 8), pas en revue humaine. La
-revue ne tient pas dans la durée, car le risque réapparaît à chaque nouvelle métrique émise par une
-spec ultérieure.
+**Statut du contrat** : c'est une **règle normative**, contraignante pour toute spec consommatrice.
+`9g` en fait une **consigne** (« labels = ids, jamais de PII ») et n'y attache aucune preuve, `5c`
+la redit (« Jamais de PII dans les métriques Prometheus »).
+
+**Comment elle est tenue, jalon par jalon** :
+
+| Jalon | Sujets émettant ces libellés | Régime |
+| --- | --- | --- |
+| **M0** (S02) | **aucun** | convention `10b` + revue (Art. 16) — S02 n'écrit aucun module de contrôle (Art. 20) |
+| **M1–M2** (S04, S05, S08) | `lane`, `alias`, `key_id`, `budget` | **porte mécanique** à rattacher à S03 ou S04 — à trancher, voir les *Arbitrages ouverts* du plan |
 
 **Engagement pour les specs consommatrices** : une métrique qui ne respecte pas cette liste blanche
-**fait échouer la porte** et ne peut pas être fusionnée.
+est **non conforme** et doit être refusée en revue dès aujourd'hui ; dès que la porte mécanique
+existe, elle la fait échouer.
 
 ---
 
-## Contrat 3 — Cadences de collecte
+## Contrat 3 — Jobs et intervalles de scrape *(`5b`, FR-001, FR-003)*
 
-| Cible | Cadence |
+| Job | `scrape_interval` |
 | --- | --- |
-| Exportateur matériel GPU | **1 s** |
-| Plan de contrôle, moteurs, collecte elle-même | **5 s** |
+| `dcgm-exporter` | **1 s** |
+| `gateway`, `node-A` (sglang GPU 0+1), `node-B` (sglang GPU 2), `node-C` (llama.cpp GPU 3), `self` | **5 s** |
 
-**Garantie** : une cible injoignable est signalée avec sa raison et **n'interrompt pas** la collecte
-des autres.
+Les cibles sont **internes à `quadra-net`** — jamais un port publié sur l'hôte (`5b` : « aucun port
+moteur exposé »).
+
+**Garantie** : une cible `down` est signalée dans `/targets` avec sa raison et **n'interrompt pas** le
+scrape des autres.
 
 ---
 
@@ -60,8 +71,8 @@ des autres.
 
 | Élément | Valeur |
 | --- | --- |
-| Rétention des séries | **90 jours** |
-| Persistance | volume dédié, survit au redémarrage de la pile |
+| Rétention des séries | **90 jours** (`5b`, `5c`) |
+| Persistance | volume `promdata`, survit au redémarrage de la pile |
 | Purge | automatique au-delà de la rétention |
 
 **Vérifiable** : une mesure de 89 jours est lisible, une mesure de 91 jours ne l'est plus (SC-003).
@@ -72,13 +83,13 @@ journal d'audit 2 ans (S13), résultats de lots 7 j (S18).
 
 ---
 
-## Contrat 5 — Le dépôt fait autorité sur les tableaux de bord
+## Contrat 5 — Le dépôt fait autorité sur les `Dashboards`
 
 | Règle | Conséquence |
 | --- | --- |
-| Toute définition vit **dans le dépôt** | revuable comme du code |
-| Provisionnement **réappliqué à chaque démarrage** | une modification manuelle **ne survit pas** |
-| Nommage `ds-<domaine>.json` | convention 10b |
+| Toute définition vit **dans le dépôt**, sous `deploy/grafana/` | revuable comme du code (`9g`) |
+| Provisionnement **réappliqué à chaque démarrage** | une modification manuelle dans Grafana **ne survit pas** |
+| Nommage `ds-<domaine>.json` | `10b` |
 
 **Ce n'est pas un import initial.** La distinction est le cœur du contrat : un import laisserait le
 dépôt et l'affichage diverger silencieusement. Vérifié par SC-005 — modifier, redémarrer, constater
@@ -92,10 +103,10 @@ le retour à la définition versionnée.
 
 | Consommateur | Ce qu'il fait |
 | --- | --- |
-| Tableaux de bord (S02) | lisent cette chaîne |
-| Hub d'observabilité (S15) | lit cette chaîne |
-| Vue de santé agrégée (S21) | lit cette chaîne |
-| Traces par requête (S14) | **réutilisent les mesures déjà émises**, sans réinstrumenter |
+| `Dashboards` Grafana (S02) | lisent ce Prometheus |
+| Hub d'observabilité (S15) | lit ce Prometheus |
+| Vue de santé agrégée (S21) | lit ce Prometheus |
+| `Trace` par requête (S14) | **réutilise les mesures déjà émises**, sans réinstrumenter |
 
 **Vérifiable** : inspection des dépendances — aucun second collecteur, aucun second magasin de
 séries temporelles.
