@@ -96,6 +96,7 @@ Référence : [`specs/RESEARCH-STACK.md`](../RESEARCH-STACK.md), §1 et §7.
 | 20 | YAGNI | ✅ | Ni hub interne, ni éditeur de règles, ni heatmap — tout cela est S15. S02 pose la collecte et le routage, rien de plus. |
 | 21 | Sécurité continue | ✅ | Le contrôle de libellés est aussi un contrôle de fuite : aucune donnée personnelle ne peut entrer dans une série temporelle. |
 | 22 | État de l'art | ✅ | Veille consignée, D1 arbitrée. Écart de majeures documenté et pris en compte dans T1. |
+| 23 | La chaîne d'abord, le local en attendant | ✅ | S02 ne construit pas la chaîne ; elle en dépend et lui obéit. Le provisionnement depuis le dépôt, réappliqué à chaque démarrage, est exactement ce que l'Art. 23 exige de la promotion : rien n'entre par un ajustement manuel dans l'interface, tout passe par un changement versionné qui traverse `dev` puis `test`. Tant que S03 n'est pas livrée, les portes de S02 s'exécutent en local et font foi. |
 
 **Verdict** : porte **franchie**. `Complexity Tracking` vide.
 

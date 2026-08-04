@@ -117,6 +117,7 @@ stables et testables sans GPU ; le couple pilote/CUDA ne l'est pas.
 | 20 | YAGNI | ✅ | Périmètre borné par la section « Hors périmètre » de la spec. Volume d'offload provisionné mais **aucun mécanisme** d'offload. |
 | 21 | Sécurité continue | ✅ | Aucun secret en dur ; le fichier d'environnement d'exemple ne contient que des valeurs factices. Scan de secrets fourni par S03. |
 | 22 | État de l'art | ✅ | Veille consignée dans `RESEARCH-STACK.md` §1 et §2 ; décisions D1 et D2 signalées. |
+| 23 | La chaîne d'abord, le local en attendant | ✅ | S01 est le versant infrastructure du couple que forme l'Art. 23 : elle consomme les images étiquetées par S03 et fournit en retour la définition de déploiement dont l'étape de bout en bout de S03 a besoin. Elle ne construit pas la chaîne, elle en est le premier client. Tant que S03 n'est pas livrée, les portes de S01 s'exécutent en local et font foi ; les fusions suivent la topologie `NNN-slug` → `dev` → `test` → `master` en `--no-ff`. L'épinglage par digest (Art. 11, critère A3) est précisément ce qui rendra la promotion de `test` vers `master` réversible par ré-étiquetage. |
 
 **Verdict** : porte **franchie**. Aucun article violé, aucune dérogation demandée.
 `Complexity Tracking` reste vide.

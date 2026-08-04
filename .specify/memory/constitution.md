@@ -1,6 +1,43 @@
 <!--
-SYNC IMPACT REPORT
-==================
+SYNC IMPACT REPORT — v1.1.0
+===========================
+Version change: 1.0.0 → 1.1.0
+Nature du changement: MINOR — un article ajouté, portée de deux articles élargie
+
+Principes ajoutés:
+  - Art. 23 — La chaîne d'abord, le local en attendant
+
+Principes modifiés:
+  - Art. 8  — renvoi ajouté vers l'Art. 23 (ordre de mise en place des portes et
+              régime applicable tant qu'elles n'existent pas)
+  - Art. 14 — renvoi ajouté vers l'Art. 23 (les portes locales font foi seules en
+              l'absence de CI)
+
+Principes retirés: aucun
+
+Raison du bump MINOR (et non MAJOR): aucun article n'est retiré ni redéfini de façon
+incompatible. Le régime local de l'Art. 23 ne desserre pas la porte de l'Art. 8 — il
+nomme où elle s'exécute tant que la chaîne n'existe pas, ce que l'Art. 14 postulait
+déjà par l'équivalence « hooks locaux ≡ CI ».
+
+Artefacts dépendants propagés dans le même changement (Art. 13):
+  - specs/001-socle-compose-moteurs-caddy/plan.md — ligne Art. 23 au Constitution Check
+  - specs/002-observabilite-de-base/plan.md — idem
+  - specs/003-socle-qualite-ci/plan.md — idem
+  - specs/004..021/plan.md — SANS OBJET : ces 18 fichiers sont des copies non remplies
+    de .specify/templates/plan-template.md ; leur Constitution Check sera évalué au
+    premier /speckit-plan, contre la v1.1.0.
+
+Régime dégradé courant (consignation exigée par l'Art. 23 lui-même):
+  - Ni chaîne d'intégration, ni dépôt distant à ce jour. Les portes s'exécutent en
+    local et font foi ; les fusions se font en --no-ff sur la topologie
+    NNN-slug → dev → test → master.
+  - Condition de sortie : implémentation de S03 (jalon produit M0).
+
+TODO différés: aucun.
+
+HISTORIQUE
+==========
 Version change: (template non ratifié) → 1.0.0
 Nature du changement: ratification initiale (première adoption)
 
@@ -125,6 +162,9 @@ rien NE FUSIONNE tant qu'une porte est rouge :
 Chaque critère d'acceptation EST prouvé par une tâche `[TEST]` tracée critère→preuve. Trois chemins
 exigent EN PLUS une revue humaine : **auth**, **facturation**, **proxy streaming**.
 
+L'ordre de mise en place de ces portes, et le régime applicable tant qu'elles n'existent pas,
+relèvent de l'Art. 23.
+
 ### Art. 9 — La simplicité — opérable par un seul, lisible par un seul
 
 Chaque ajout DOIT rester opérable par une seule personne : versions épinglées, rollback en une
@@ -175,7 +215,7 @@ doc est incomplet — pas « à documenter plus tard ».
 Commits conventionnels et atomiques : un changement logique, un état qui fonctionne, un message qui
 dit pourquoi. Les hooks locaux exécutent EXACTEMENT les portes de la CI — un commit vert en local
 prédit une CI verte. Désactiver une porte pour faire passer un commit n'est pas une mitigation,
-c'est une faute.
+c'est une faute. En l'absence de CI, les portes locales font foi seules (Art. 23).
 
 ### Art. 15 — Boucles agentiques bornées
 
@@ -231,6 +271,37 @@ Avant toute spec et toute implémentation non triviale : vérifier ce qui existe
 bibliothèques, designs), comparer aux pratiques actuelles, et consigner dans la spec ce qui est
 réutilisé, imité ou écarté, avec la raison. Implémenter sans avoir regardé l'existant viole l'Art. 6
 par ignorance — la veille fait partie du travail, pas du luxe.
+
+### Art. 23 — La chaîne d'abord, le local en attendant
+
+La chaîne d'intégration et de déploiement EST mise en place au plus tôt : sa construction PRIME sur
+toute fonctionnalité métier, car sans elle la definition of done n'est pas mécaniquement vérifiable
+et la délégation aux agents (Art. 8) retombe sur du jugement.
+
+**Dès qu'elle existe, son usage est OBLIGATOIRE et exclusif** : aucun changement n'entre sans l'avoir
+traversée, aucune porte n'est contournée, aucune fusion ne se fait hors d'elle. Il en va de même du
+dépôt distant dès qu'il existe : la fusion passe par la forge et ses protections de branche — jamais
+par un merge local.
+
+**En son absence, tout s'exécute EN LOCAL et fait foi** : les portes locales (style, typage, tests,
+couverture, sécurité) sont exécutées avant chaque validation et leur sortie capturée EST la
+definition of done ; sans dépôt distant, le versionnement et les fusions se font en local.
+
+La topologie de fusion EST fixe : les branches de développement portent le nommage Spec Kit
+(`NNN-slug`) et n'entrent dans `dev` que par demande de fusion ; `dev` promeut vers `test`, où la
+chaîne s'exécute intégralement ; `test` promeut vers `master`, qui reste stable par construction. Les
+portes de rang 1 à 3 gardent l'entrée dans `dev` ; les portes 4 et 5, qui n'existent qu'à distance,
+gardent la promotion de `test`. Aucune promotion ne saute un maillon, et aucun commit direct
+n'atterrit sur `test` ni sur `master`.
+
+Ce régime dégradé EST transitoire, assumé et consigné dans le dépôt. Il n'est jamais un état cible :
+il cesse à l'instant où la chaîne ou la forge existe, et sa persistance au-delà du jalon qui la
+prévoit est un constat de revue (Art. 16), pas une habitude.
+
+*Rationale* : une porte qui n'existe pas encore ne dispense pas de la franchir — elle déplace
+seulement où on la franchit. Nommer le régime dégradé et le borner dans le temps empêche les deux
+dérives symétriques : attendre la CI pour se donner des critères, et s'habituer au local une fois la
+CI disponible.
 
 ## Socle de contrôle & portes de qualité
 
@@ -324,4 +395,4 @@ tout agent avant travail. Le document produit de référence (`Quadra Document C
 source de vérité fonctionnelle : taxonomie des entités, glossaire normatif, machines à états et
 matrice RBAC.
 
-**Version**: 1.0.0 | **Ratified**: 2026-08-01 | **Last Amended**: 2026-08-01
+**Version**: 1.1.0 | **Ratified**: 2026-08-01 | **Last Amended**: 2026-08-04
