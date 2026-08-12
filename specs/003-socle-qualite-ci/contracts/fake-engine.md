@@ -6,6 +6,10 @@ métriques — presque toute la pyramide de tests en dépend.
 **Nature** : paquet **distribuable et versionné**, installable comme dépendance de test. Ce n'est
 **pas** un fichier de test à copier (FR-012, Art. 19).
 
+**Rattachement à la taxonomie (`10a`, Art. 17)** : il expose le contrat d'un `engine` de l'arbre
+d'exécution (`Cluster → Host → Node → Engine → Instance`) **sans être une `instance`** — il ne sert
+aucun `alias` en production et ne réside sur aucun `node`. Aucun état de `10d` ne lui est attribué.
+
 ---
 
 ## Contrat 1 — Surface d'inférence simulée
@@ -50,9 +54,15 @@ latence étant choisie, un test instable est un défaut, pas une fatalité (cas 
 | Mode | Usage | Consommateur type |
 | --- | --- | --- |
 | **En processus** | tests unitaires et d'intégration rapides | plan de contrôle |
-| **Conteneurisé** | environnement éphémère de bout en bout | étape de bout en bout, S11, S12 |
+| **Conteneurisé** | environnement éphémère du dernier maillon | étape **bout en bout et charge**, S11, S12 |
 
 Les deux modes exposent **la même surface** et **les mêmes paramètres**.
+
+**Un seul environnement, un seul moteur factice pour le dernier maillon** : le volet de **charge**
+s'exécute sur le **même** environnement éphémère et contre la **même** instanciation du moteur factice
+que le volet de bout en bout (FR-017, FR-027 ; Art. 8 porte 4 « e2e + charge sur compose éphémère »).
+Les scénarios de charge vivent dans `k6/<lane>-<scénario>.js` (`10b`) et sont versionnés par **S21**,
+qui les rejoue sans créer un second jeu (Art. 19) — le moteur factice ne change pas pour autant.
 
 ---
 
@@ -75,10 +85,15 @@ Borne explicite, pour éviter qu'il devienne un second produit (Art. 20).
 
 | Hors périmètre | Où c'est traité |
 | --- | --- |
-| Consommation mémoire réaliste, tenue VRAM | canari — S06, S09 |
-| Topologie matérielle, appairage de cartes | canari — S06 |
-| Débit réel, comportement sous lot continu | canari — S20, banc de charge |
+| Consommation mémoire réaliste, `fit` VRAM | canari — S06, S09 |
+| Topologie matérielle, appairage de cartes (`NVLink`) | canari — S06 |
+| Débit réel, comportement sous lot continu | canari — S20 |
 | Qualité des réponses générées | sans objet — le contenu simulé n'a pas de sens sémantique |
+
+**Ce que la porte de charge mesure — et ne mesure pas** : l'étape de charge (FR-027) exerce le **plan
+de contrôle** contre le moteur factice — files, `lane`, refus, annulation. Elle ne mesure **aucun
+débit réel de moteur** : cela exige du matériel et relève du canari. Un scénario de charge qui
+prétendrait mesurer un débit produirait un chiffre faux.
 
 **Règle** : ce qui ne peut pas être simulé fidèlement **ne doit pas l'être approximativement**. Un
 simulateur qui prétendrait estimer la mémoire produirait des tests verts et une production fausse.
