@@ -67,14 +67,21 @@ la pyramide** — c'est le cas limite le plus dangereux identifié dans la spec.
 exercés qu'au déploiement canari.
 
 **Rationale** : Art. 8. Un GPU dans la chaîne la rendrait coûteuse, lente et indisponible, et surtout
-**non reproductible** — les tests dépendraient d'un état matériel. Le prix à payer est que trois
-exigences du projet échappent à la chaîne et doivent être prouvées au canari :
+**non reproductible** — les tests dépendraient d'un état matériel. Le prix à payer est que **quatre**
+exigences du projet échappent à la chaîne et doivent être prouvées au banc / canari :
 
-| Exigence | Spec | Pourquoi elle échappe à la chaîne |
-| --- | --- | --- |
-| Découverte de topologie matérielle | S06 (SC-001) | exige de vraies cartes appairées (`NVLink`) |
-| Calibration du verdict de `fit` | S09 (SC-001) | exige 20 modèles mesurés |
-| Débit additionné sur deux `host` | S20 (SC-001) | exige deux `host` réels |
+| Exigence | Spec | Jalon | Pourquoi elle échappe à la chaîne |
+| --- | --- | --- | --- |
+| Cibles de collecte `up` et cartes rafraîchies | S02 (SC-001, SC-004) | **M0** | exige les moteurs et les cartes réelles |
+| Découverte de topologie matérielle | S06 (SC-001) | M1 | exige de vraies cartes appairées (`NVLink`) |
+| Calibration du verdict de `fit` | S09 (SC-001) | M2 | exige 20 modèles mesurés |
+| Débit additionné sur deux `host` | S20 (SC-001) | M4 | exige deux `host` réels |
+
+**L'exception commence dès M0**, pas à M1 : la ligne S02 est postérieure à la première rédaction de ce
+document et vient de la revue croisée de S02 (décision `DA-5` de cette spec). C'est le cas le plus
+gênant des quatre, parce que `9e` exige simultanément « dashboards GPU vivants » et « CI verte » **au
+même jalon** — la porte 5 de l'Art. 8 est donc mobilisée dès M0, et non seulement au canari de
+bascule.
 
 **Ce point doit être dit explicitement** dans les plans concernés plutôt que laissé implicite — sans
 quoi on croira ces critères couverts par la chaîne.

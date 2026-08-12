@@ -103,14 +103,21 @@ definition of done. Dès que la chaîne existe, son usage devient **obligatoire 
 | La chaîne **ne touche jamais un GPU** | contrainte d'architecture, pas limitation temporaire |
 | Les vrais moteurs ne sont exercés **qu'au canari** | la chaîne reste rapide et reproductible |
 
-**Trois exigences du projet échappent donc à la chaîne** et doivent être prouvées au canari — à dire
-explicitement dans les plans concernés plutôt que de les croire couvertes :
+**Quatre exigences du projet échappent donc à la chaîne** et doivent être prouvées au banc / canari —
+à dire explicitement dans les plans concernés plutôt que de les croire couvertes :
 
-| Exigence | Spec |
-| --- | --- |
-| Découverte de topologie matérielle | **S06** (SC-001) |
-| Calibration du verdict de `fit` (20 modèles mesurés) | **S09** (SC-001) |
-| Débit additionné sur deux `host` | **S20** (SC-001) |
+| Exigence | Spec | Jalon |
+| --- | --- | --- |
+| Cibles de collecte `up` et cartes rafraîchies à 1 Hz | **S02** (SC-001, SC-004) | **M0** |
+| Découverte de topologie matérielle | **S06** (SC-001) | M1 |
+| Calibration du verdict de `fit` (20 modèles mesurés) | **S09** (SC-001) | M2 |
+| Débit additionné sur deux `host` | **S20** (SC-001) | M4 |
+
+**La liste s'ouvre dès M0.** La ligne S02 vient de la revue croisée de cette spec et non de la
+rédaction initiale de ce contrat : `9e` exige au **même jalon** « dashboards GPU vivants » et « CI
+verte », ce qui mobilise la porte 5 dès M0. Toute spec qui découvre une exigence de ce type
+l'**ajoute ici** — ce contrat est la liste unique (Art. 19), et une exigence hors chaîne qu'aucun
+artefact ne nomme est une exigence qu'on croira couverte.
 
 ---
 

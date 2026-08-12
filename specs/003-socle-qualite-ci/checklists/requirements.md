@@ -2,7 +2,7 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-08-01
-**Last reviewed**: 2026-08-05 (itération 2 — après ajout de FR-026 à FR-030 et de SC-009 à SC-011)
+**Last reviewed**: 2026-08-12 (itération 3 — revue de cohérence croisée des artefacts de conception)
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -95,6 +95,57 @@ Retraits :
   `9h`. L'exigence de « messages actionnables » du document ne concerne que les erreurs Hugging Face
   (`9c`, `9n` — S09).
 
+**Itération de validation 3 — revue de cohérence croisée des artefacts de conception**
+
+Les itérations 1 et 2 portaient sur `spec.md`. Celle-ci croise les **huit** artefacts entre eux —
+`spec.md`, `plan.md`, `tasks.md`, `research.md`, `data-model.md`, `quickstart.md` et les deux contrats.
+La spec elle-même n'est pas modifiée : **quatre constats** portant sur les artefacts dérivés, tous
+corrigés (Art. 16 — un constat se corrige ou s'accepte explicitement, jamais en silence). Les trois
+premiers viennent de la revue de S03 ; le quatrième est **remonté par la revue croisée de S02**, dont
+les contrats de S03 sont consommateurs.
+
+- **Constat 1 — `quickstart.md` scénario 3 revendiquait SC-004.** Le scénario du moteur factice
+  déclarait prouver « SC-003, SC-004 » alors que **SC-004 porte sur les étapes de la chaîne** (« 100 %
+  s'exécutent sans accéder à un GPU ») et appartient au scénario 7 — ce que le récapitulatif du même
+  fichier disait déjà, et ce que `tasks.md` confirme en attribuant SC-004 à T020. Deux scénarios
+  revendiquaient donc le même critère, en contradiction avec la règle « un critère, une preuve »
+  (Art. 8). **Corrigé** : SC-004 retiré du scénario 3, avec la raison énoncée — le fonctionnement sans
+  GPU du moteur factice (FR-007) est la *condition* de SC-004, pas sa preuve.
+- **Constat 2 — FR-005 n'était couvert par aucun scénario de validation.** Le scénario 1 n'exerçait
+  que le versant *plan de contrôle*, alors que FR-005 et le critère d'acceptation US1-AS5 exigent les
+  **deux versants** et que la tâche `[TEST]` correspondante (T002) les asserte tous les deux. Le guide
+  humain sous-couvrait donc sa propre preuve automatisée, et son récapitulatif omettait FR-005.
+  **Corrigé** : une étape « code de l'interface mal typé » ajoutée au scénario 1 (désormais six
+  tentatives), FR-005 ajouté à sa ligne « Prouve » et une ligne dédiée au récapitulatif. Le nombre de
+  scénarios reste **12** — les renvois de `plan.md` et de T029 restent valides.
+- **Constat 3 — la réconciliation d'effort de l'ARBITRAGE 7 n'était pas exacte.** `tasks.md`
+  annonçait un écart « réconcilié **exactement**, dans les deux sens » de +3.5 j, mais son
+  itemisation comportait **deux erreurs qui se compensaient** : la ligne « tâches moins chères »
+  omettait `9h` T6 (1.0 j) → T017 (0.75 j), soit −0.25, et T029 (0.25 j) était déclarée *non imputée*
+  alors qu'elle **est** comptée dans le tableau de phases qui somme à 10.0 j. Le total était donc
+  juste par compensation, mais le détail ne l'était pas — précisément le défaut que le mot
+  « exactement » interdit. **Corrigé** : `9h` T6 → T017 ajouté à la ligne des tâches moins chères
+  (désormais **trois**, −1.00), T029 imputée (+0.25), et la chaîne de calcul rendue explicite jusqu'au
+  total du tableau de phases : 0.25 + 2.75 + 1.25 + 0.25 − 1.00 = +3.5, puis 6.5 + 3.5 = 10.0.
+
+- **Constat 4 — la liste des exigences hors chaîne était incomplète.** `research.md`, `plan.md`,
+  `tasks.md` (T025) et `contracts/quality-gates.md` annonçaient **trois** exigences échappant à la
+  chaîne et prouvées au canari (S06, S09, S20). La revue croisée de **S02** en a fait apparaître une
+  **quatrième**, et la plus gênante : les cibles de collecte `up` et les cartes rafraîchies à 1 Hz
+  (S02 `SC-001`, `SC-004`) exigent les moteurs et les cartes réelles, donc la porte 5 **dès M0** —
+  alors que `9e` demande au même jalon « dashboards GPU vivants » **et** « CI verte ». Une exigence
+  hors chaîne qu'aucun artefact ne nomme est une exigence qu'on croira couverte.
+  **Corrigé** : les quatre emplacements passent à quatre, avec la colonne de jalon, et
+  `contracts/quality-gates.md` est désigné **liste unique** (Art. 19) que toute spec découvrant un cas
+  de ce type doit compléter. Propagation faite dans le même changement (Art. 13).
+
+**Vérifications passées sans constat** : somme des efforts par phase (10.0 j, exacte au quart de jour)
+· nombre de tâches (29, conforme à l'annonce) · couverture des **30** exigences par au moins une tâche
+(100 %) · couverture des **11** critères de succès par **exactement une** tâche `[TEST]` chacun ·
+concordance des trois tables de traçabilité (`spec.md`, `tasks.md`, `quickstart.md`) · 23 lignes au
+Constitution Check · **huit** arbitrages, identiques dans les quatre artefacts qui les citent · aucune
+plateforme d'intégration nommée · aucun `NEEDS CLARIFICATION` résiduel.
+
 **Traçabilité critère → preuve** : chaque critère de succès est prouvé par **une seule** tâche `[TEST]`
 de `tasks.md`, jamais par une tâche d'implémentation (Art. 8) — A1 → SC-001 → **T002** · A2 → SC-002 →
 **T020** · A3 → SC-003 → **T015** · consigne « la CI ne touche jamais un GPU » → SC-004 → **T020**.
@@ -131,4 +182,7 @@ temps que l'absence de seconde déclaration des portes. La table complète figur
    une porte.
 
 **Résultat** : tous les items passent. Spec à jour et cohérente avec la constitution v1.1.0
-(23 articles).
+(23 articles). Après l'itération 3, les **huit** artefacts sont cohérents entre eux : S03 est **prête
+pour `/speckit-implement`**, sous la seule réserve des huit arbitrages ci-dessus — dont **aucun ne
+bloque le démarrage** des tâches, l'ARBITRAGE 1 (forge et exécuteur) conditionnant uniquement le volet
+*promotion* de FR-029 / FR-030, explicitement laissé sans tâche.

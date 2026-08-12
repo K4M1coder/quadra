@@ -273,9 +273,12 @@ J4 exige les trois.
 - **Bases éphémères aux majeures de production.** Conséquence de D1 : tester contre une majeure
   antérieure ferait passer des tests qui échoueraient en production.
 - **Aucun accès GPU dans la chaîne.** Contrainte d'architecture. Le moteur factice existe précisément
-  pour cela. Trois exigences du projet échappent donc à la chaîne et sont prouvées au canari —
-  découverte de topologie matérielle (S06), calibration du verdict de `fit` (S09), débit additionné
-  sur deux `host` (S20) : à dire dans les plans concernés plutôt qu'à croire couvert ici.
+  pour cela. **Quatre** exigences du projet échappent donc à la chaîne et sont prouvées au banc /
+  canari — cibles de collecte `up` et cartes rafraîchies (S02, **dès M0**), découverte de topologie
+  matérielle (S06), calibration du verdict de `fit` (S09), débit additionné sur deux `host` (S20) : à
+  dire dans les plans concernés plutôt qu'à croire couvert ici. La liste unique vit dans
+  [`contracts/quality-gates.md`](./contracts/quality-gates.md) (Art. 19) ; toute spec qui en découvre
+  une l'y ajoute.
 - **Trois épinglages distincts, à ne pas confondre.**
   1. Les **dépendances** sont épinglées par le verrou reproductible.
   2. Les **images construites** sont étiquetées version + empreinte (FR-019) — c'est ce qui rend le

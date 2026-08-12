@@ -22,16 +22,22 @@ Tenter de valider, successivement :
 
 1. un fichier **mal formaté** ;
 2. du code du plan de contrôle **mal typé** ;
-3. un fichier contenant un **secret en clair** ;
-4. un message de validation **hors convention** ;
-5. un message conventionnel **sans `scope` de spec** (par exemple `feat: ...` au lieu de
+3. du code de l'**interface** mal typé — les portes s'appliquent aux **deux versants**, pas seulement
+   au plan de contrôle ;
+4. un fichier contenant un **secret en clair** ;
+5. un message de validation **hors convention** ;
+6. un message conventionnel **sans `scope` de spec** (par exemple `feat: ...` au lieu de
    `feat(S03): ...`).
 
-**Attendu** — les cinq tentatives sont **refusées**, et le refus **identifie le fichier** en cause.
+**Attendu** — les six tentatives sont **refusées**, et le refus **identifie le fichier** en cause.
 Aucune n'atteint le dépôt distant.
 
-**Prouve** : critère **A1** · FR-001, FR-003, FR-004, FR-006 · SC-001.
+**Prouve** : critère **A1** · FR-001, FR-003, FR-004, FR-005, FR-006 · SC-001.
 
+> L'étape 3 couvre l'exigence des **deux versants** (FR-005, critère d'acceptation US1-AS5). Sans
+> elle, ce guide n'exercerait que le plan de contrôle alors que la tâche `[TEST]` correspondante
+> (T002) asserte les deux — le guide humain sous-couvrirait sa propre preuve automatisée.
+>
 > FR-006 borne l'exigence à l'identification du **fichier** : la qualité rédactionnelle des messages
 > d'outillage n'est pas une exigence de S03 — l'outillage restitue la sortie de ses propres contrôles
 > telle quelle.
@@ -71,8 +77,13 @@ Sur une machine **sans GPU** :
 **Attendu** — réponse **jeton par jeton** au format d'un moteur réel ; latences **respectées** ;
 erreur **fidèlement reproduite** ; représentation vectorielle au format attendu.
 
-**Prouve** : critère **A3** · FR-007 à FR-011 · SC-003, SC-004.
+**Prouve** : critère **A3** · FR-007 à FR-011 · SC-003.
 Voir [`contracts/fake-engine.md`](./contracts/fake-engine.md).
+
+> **SC-004 n'est pas prouvé ici.** Il porte sur les **étapes de la chaîne** (« 100 % s'exécutent sans
+> accéder à un GPU ») et relève du scénario 7 — un seul scénario par critère. Ce que ce scénario-ci
+> établit, c'est que le moteur factice fonctionne **sans GPU** (FR-007), ce qui en est la condition,
+> pas la preuve.
 
 ---
 
@@ -205,6 +216,7 @@ attendant ».
 | Critère ou exigence | Source | Scénario | Réf. de traçabilité |
 | --- | --- | --- | --- |
 | **A1** — une porte locale refuse le non conforme | `9h` | 1 | réf. `9h` T3, T10 |
+| Portes appliquées aux **deux versants** (US1-AS5) | FR-005 | 1 | réf. `9h` T4 |
 | Équivalence locale ↔ chaîne par définition unique | Art. 14 · SC-005 | 2 | réf. `9h` T3, T8 |
 | **A3** — moteur factice : flux, latence, erreurs | `9h` | 3 | réf. `9h` T6, T7, T10 |
 | Unicité du moteur factice | Art. 19 · FR-012 | 4 | réf. `9h` T6 |
