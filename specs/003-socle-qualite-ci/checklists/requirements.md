@@ -2,7 +2,8 @@
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-08-01
-**Last reviewed**: 2026-08-12 (itération 3 — revue de cohérence croisée des artefacts de conception)
+**Last reviewed**: 2026-08-12 (itération 4 — passe de vérification adverse sur les trois specs du
+socle M0 ; itération 3 — revue de cohérence croisée des artefacts de conception)
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -156,13 +157,15 @@ temps que l'absence de seconde déclaration des portes. La table complète figur
 
 **Réserves assumées, non des défauts de la spec**
 
-- **Huit arbitrages restent ouverts** et sont consignés dans la spec — registre unique —, jamais
+- **Neuf arbitrages restent ouverts** et sont consignés dans la spec — registre unique —, jamais
   devinés (Art. 7) : forge et exécuteur de la chaîne (le plus urgent — FR-029 et FR-030 le supposent
   tranché) · rattachement de `alembic check` à S03 ou S04 · chemin du guide du contributeur · FR-017 et
   la dépendance à S01 · amendement de `10a` si les portes doivent devenir des entités · `10a` annonce
   22 articles quand la constitution ratifiée en compte 23 · écart d'effort entre le découpage en tâches
   et le « ≈ 6.5 j-agent » de `9h` · `10b` fixe « tâches : `S<nn>-T<n>` » quand le format Spec Kit
-  prévaut. `plan.md`, `tasks.md` et `research.md` n'en rappellent que les incidences (Art. 19).
+  prévaut · `10c` ne porte aucune entrée pour la référence exacte d'une image (**ARBITRAGE 9**, ouvert
+  à l'itération 4). `plan.md`, `tasks.md` et `research.md` n'en rappellent que les incidences
+  (Art. 19).
 - **Aucune plateforme d'intégration n'est nommée** dans la spec ni dans aucun artefact de conception :
   le fichier de définition peut être nommé `ci.yaml` (`9b`), son emplacement et sa plateforme non.
 
@@ -181,8 +184,33 @@ temps que l'absence de seconde déclaration des portes. La table complète figur
 5. FR-027 : le plan doit porter une **étape** de charge. Une dépendance déclarée sans porte n'est pas
    une porte.
 
+**Itération de validation 4 — passe de vérification adverse sur le socle M0 (2026-08-12)**
+
+Revue portant sur les **trois** specs du socle simultanément (S01, S02, S03). Deux constats touchent
+S03 ; les autres portent sur S01 et S02 et sont traités dans leurs checklists respectives. Chacun est
+**corrigé** ou **explicitement accepté avec sa raison** (Art. 16).
+
+| Constat | Traitement |
+| --- | --- |
+| **R2** — le contrat 5 se déclare **liste unique** des exigences hors chaîne et en nommait **quatre**, alors que **S01 porte trois preuves** qui n'entreront jamais dans la chaîne (T011 : 4 GPUs, redémarrage machine, balayage depuis une autre machine ; T015 : personne tierce ; T018 : rejeu englobant). Ni S01 ni S02 ne citaient jamais ce contrat — elles redéclaraient localement au lieu d'y renvoyer. | **Corrigé.** Le contrat 5 passe à **sept** entrées et **sépare les deux causes** que l'Art. 8 ne traite pas pareil : **cinq** échappent **par le matériel** — elles restent des **portes 5**, rejouables au banc — et **deux** échappent **par un jugement humain** (personne tierce, recette englobante), qui ne sont **pas** des portes et ne le deviendront pas. Compteur propagé dans le même changement (Art. 13) : `research.md` D-S03-3, `plan.md` § Consignes, `tasks.md` T025. `research.md` ne recopie plus la table — il **renvoie** au contrat (Art. 19). S01 et S02 y renvoient désormais au lieu de redéclarer. |
+| **R7** — **terminologie divergente** (Art. 12) : S01 et S02 écrivaient `digest`, S03 « empreinte ». Deux mots pour une même chose entre trois specs du même socle, alors que `deploy/digests.yml` de S01 est la **source unique** que la porte 3 consomme. `10c` n'en tranche aucun. | **Tranché et propagé.** Terme unique : **`digest`** — c'est celui de la **constitution** (Art. 11 : « un tag exact ou un **digest** ») et du document (`9f` T10 : « ports · digests »). Les **18** occurrences d'« empreinte » sont remplacées dans les six artefacts de S03 concernés (`spec.md` 3, `plan.md` 4, `tasks.md` 5, `research.md` 2, `quickstart.md` 1, `contracts/quality-gates.md` 3). Le nom de fichier `deploy/digests.yml` reste inchangé : un nom de fichier n'est pas un terme de glossaire. Le silence de `10c` est consigné en **ARBITRAGE 9** — même traitement que les écarts `10a` (6) et `10b` (8). |
+
+**Ce qui est explicitement accepté à l'itération 4** : les **compteurs des itérations 1 à 3 ne sont
+pas réécrits** (« quatre emplacements passent à quatre » du constat 4, « huit arbitrages » de la
+vérification d'itération 3) — ce sont des **relevés d'état passés**, non des affirmations courantes.
+Les seuls chiffres mis à jour sont ceux qui décrivent l'état **présent** : neuf arbitrages, sept
+preuves hors chaîne. Réécrire l'historique effacerait la trace du tri qu'exige l'Art. 16.
+
+**Comptages recomptés après l'itération 4** : **29 tâches** · **10.0 j-agent** (inchangé — aucune
+tâche ne change de périmètre) · **30 exigences** · **11 critères de succès** · **12 scénarios** ·
+**14 contrats** *(2 fichiers : `fake-engine.md` 1 → 5, `quality-gates.md` 1 → 9)* ·
+**23 lignes** au Constitution Check (**17 ✅**, **6 ➖**, **0 ⚠️**) · **9 arbitrages** ouverts ·
+**sept** preuves hors chaîne au contrat 5. Verdict **inchangé : porte franchie**, aucun article violé,
+`Complexity Tracking` vide — les deux constats sont un compteur incomplet et un alignement de
+vocabulaire, ni l'un ni l'autre n'étant une violation.
+
 **Résultat** : tous les items passent. Spec à jour et cohérente avec la constitution v1.1.0
-(23 articles). Après l'itération 3, les **huit** artefacts sont cohérents entre eux : S03 est **prête
-pour `/speckit-implement`**, sous la seule réserve des huit arbitrages ci-dessus — dont **aucun ne
+(23 articles). Après l'itération 4, les **huit** artefacts sont cohérents entre eux : S03 est **prête
+pour `/speckit-implement`**, sous la seule réserve des neuf arbitrages ci-dessus — dont **aucun ne
 bloque le démarrage** des tâches, l'ARBITRAGE 1 (forge et exécuteur) conditionnant uniquement le volet
 *promotion* de FR-029 / FR-030, explicitement laissé sans tâche.

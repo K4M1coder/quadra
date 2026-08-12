@@ -16,7 +16,7 @@ Deux numérotations coexistent et ne doivent pas être confondues.
 | --- | --- | --- | --- |
 | 1 | **validation locale** | style, format, **scan de secrets**, message de validation (`scope` = spec) | locale + distante |
 | 2 | **contrôles de la chaîne** | typage strict · pyramide et **seuils de couverture** · **cohérence des migrations** · analyse statique et audits de dépendances | locale + distante |
-| 3 | **construction d'images épinglées** | images étiquetées **version + empreinte** (FR-019) | locale + distante |
+| 3 | **construction d'images épinglées** | images étiquetées **version + digest** (FR-019) | locale + distante |
 | 4 | **bout en bout et charge** | environnement éphémère + moteur factice ; **la charge bloque** | distante |
 | 5 | **canari GPU** | hors chaîne — relève de l'exploitation | hors chaîne |
 
@@ -103,21 +103,38 @@ definition of done. Dès que la chaîne existe, son usage devient **obligatoire 
 | La chaîne **ne touche jamais un GPU** | contrainte d'architecture, pas limitation temporaire |
 | Les vrais moteurs ne sont exercés **qu'au canari** | la chaîne reste rapide et reproductible |
 
-**Quatre exigences du projet échappent donc à la chaîne** et doivent être prouvées au banc / canari —
-à dire explicitement dans les plans concernés plutôt que de les croire couvertes :
+**Sept preuves du projet échappent donc à la chaîne** — à dire explicitement dans les plans concernés
+plutôt que de les croire couvertes. **Deux causes distinctes, que l'Art. 8 ne traite pas de la même
+façon** : ce qui échappe **par le matériel** reste une porte, la **porte 5**, et se rejoue au banc /
+canari ; ce qui échappe **par un jugement humain** n'est pas une porte du tout — aucune mécanique ne
+la rejouera, et l'article n'en fait pas une. Confondre les deux ferait croire qu'une recette manuelle
+finira par entrer dans la chaîne.
 
-| Exigence | Spec | Jalon |
-| --- | --- | --- |
-| Cibles de collecte `up` et cartes rafraîchies à 1 Hz | **S02** (SC-001, SC-004) | **M0** |
-| Découverte de topologie matérielle | **S06** (SC-001) | M1 |
-| Calibration du verdict de `fit` (20 modèles mesurés) | **S09** (SC-001) | M2 |
-| Débit additionné sur deux `host` | **S20** (SC-001) | M4 |
+### Échappent par le matériel — porte 5 (banc / canari)
+
+| Exigence ou preuve | Spec | Jalon | Ce que le matériel impose |
+| --- | --- | --- | --- |
+| Cibles de collecte `up` et cartes rafraîchies à 1 Hz | **S02** (SC-001, SC-004) | **M0** | les moteurs et les cartes réelles |
+| Pile saine < 5 min, seul 443 exposé, digests inspectés | **S01** (T011 — SC-001, SC-002, SC-003, SC-005, SC-007) | **M0** | machine de référence à **4 GPUs**, **redémarrage machine**, **balayage depuis une autre machine**. Seule l'assertion sur les digests est, en elle-même, rejouable sans GPU |
+| Découverte de topologie matérielle | **S06** (SC-001) | M1 | de vraies cartes appairées (`NVLink`) |
+| Calibration du verdict de `fit` (20 modèles mesurés) | **S09** (SC-001) | M2 | 20 modèles mesurés |
+| Débit additionné sur deux `host` | **S20** (SC-001) | M4 | deux `host` réels |
+
+### Échappent par un jugement humain — hors porte
+
+| Preuve | Spec | Jalon | Pourquoi aucune mécanique ne la rejoue |
+| --- | --- | --- | --- |
+| Installation par une personne n'ayant jamais vu le projet | **S01** (T015 — SC-004) | **M0** | exige une **personne tierce** ; le critère est « aucune question posée », pas un état qu'un programme observe |
+| Rejeu englobant des scénarios de validation, sorties capturées | **S01** (T018 — **aucun critère à elle seule**) | **M0** | passe de recette qui **englobe** les preuves matérielles ci-dessus ; la chaîne ne peut pas en rejouer la moitié |
 
 **La liste s'ouvre dès M0.** La ligne S02 vient de la revue croisée de cette spec et non de la
 rédaction initiale de ce contrat : `9e` exige au **même jalon** « dashboards GPU vivants » et « CI
-verte », ce qui mobilise la porte 5 dès M0. Toute spec qui découvre une exigence de ce type
-l'**ajoute ici** — ce contrat est la liste unique (Art. 19), et une exigence hors chaîne qu'aucun
-artefact ne nomme est une exigence qu'on croira couverte.
+verte », ce qui mobilise la porte 5 dès M0. Les **trois lignes S01** viennent de la revue croisée
+suivante : ni `9f`, ni `9b`, ni les artefacts de S01 ne les avaient inscrites ici, alors que S01 les
+qualifiait déjà de **recette manuelle** dans son plan et dans ses tâches. Toute spec qui découvre une
+preuve de ce type l'**ajoute ici** — ce contrat est la liste unique (Art. 19), et une preuve hors
+chaîne qu'aucun artefact ne nomme est une preuve qu'on croira couverte. **S01 et S02 y renvoient au
+lieu de la redéclarer.**
 
 ---
 
@@ -164,8 +181,8 @@ ordre et leur effet **sans plateforme** (ARBITRAGE 1).
 | Portée | Règle | Exigence |
 | --- | --- | --- |
 | **Dépendances** | verrou reproductible | Art. 11 |
-| Images **construites** | étiquetées version + empreinte, retour arrière par ré-étiquetage | **FR-019** |
-| Briques **consommées** par la chaîne — actions, outils, images de base des étapes | tag exact ou empreinte ; jamais `:latest`, jamais une branche, jamais un intervalle ouvert | **FR-026**, SC-011 |
+| Images **construites** | étiquetées version + digest, retour arrière par ré-étiquetage | **FR-019** |
+| Briques **consommées** par la chaîne — actions, outils, images de base des étapes | tag exact ou digest ; jamais `:latest`, jamais une branche, jamais un intervalle ouvert | **FR-026**, SC-011 |
 
 Un référencement flottant **fait échouer la chaîne**. Le contrôle tourne en **porte locale** et en
 **étape**, pour que le refus survienne avant l'envoi. SC-011 exige **100 %** : la porte ne connaît pas

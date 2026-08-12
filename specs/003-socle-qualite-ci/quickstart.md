@@ -187,7 +187,7 @@ unitaire rouge. La charge n'est ni ignorée, ni consignée comme mesure indicati
    consommée n'est référencé par `:latest`, par une branche ou par un intervalle ouvert.
 2. Introduire délibérément un tel référencement flottant et relancer.
 
-**Attendu** — à l'étape 1, **100 %** des références sont des tags exacts ou des empreintes. À
+**Attendu** — à l'étape 1, **100 %** des références sont des tags exacts ou des digests. À
 l'étape 2, le refus survient **avant l'envoi** (porte locale) et la chaîne **échoue**.
 
 **Prouve** : FR-026 · SC-011 · Art. 11 (« toute image, dépendance ou action CI EST épinglée »).

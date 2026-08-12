@@ -220,13 +220,13 @@ renvois des autres artefacts restent valides.*
 - **FR-018**: La chaîne DOIT exécuter des contrôles de sécurité — analyse statique du code et audit
   des dépendances — et échouer en nommant la dépendance ou le motif en cause (Art. 21).
 - **FR-019**: Les images construites DOIVENT être étiquetées de façon reproductible (version
-  sémantique et empreinte du contenu), pour rendre le retour arrière possible par simple
+  sémantique et digest du contenu), pour rendre le retour arrière possible par simple
   ré-étiquetage (Art. 11).
 - **FR-020**: Toute la configuration des portes DOIT être **versionnée dans le dépôt**, de sorte que
   la désactivation d'une porte soit visible en revue.
 - **FR-026**: La définition de la chaîne DOIT être **épinglée** au même titre que ce qu'elle produit :
   chaque action, outil ou image qu'une étape consomme est référencée par un tag exact ou une
-  empreinte — jamais `:latest`, jamais une branche, jamais un intervalle ouvert (Art. 11 : « toute
+  digest — jamais `:latest`, jamais une branche, jamais un intervalle ouvert (Art. 11 : « toute
   image, dépendance **ou action CI** EST épinglée »). Un référencement flottant DOIT faire échouer la
   chaîne. FR-019 couvre les images **construites** ; celle-ci couvre les briques **consommées** par la
   chaîne elle-même.
@@ -346,7 +346,7 @@ chaîne décrites par les exigences ci-dessus. Les modéliser exigerait un **ame
 - **SC-010**: Un scénario de charge en échec fait échouer la chaîne et **bloque la fusion**, au même
   titre qu'un test unitaire rouge.
 - **SC-011**: **100 %** des actions, outils et images consommés par les étapes de la chaîne sont
-  épinglés par tag exact ou empreinte ; aucun référencement flottant ne subsiste (Art. 11).
+  épinglés par tag exact ou digest ; aucun référencement flottant ne subsiste (Art. 11).
 
 ### Traçabilité critère → preuve
 
@@ -409,7 +409,7 @@ FR-020) ; la constitution demande l'équivalence, pas un mécanisme de comparais
 ## Arbitrages en attente *(ARBITRAGE — consignés ici, non tranchés)*
 
 Ces points demandent une décision du mainteneur ; aucune source du projet ne permet de la prendre à
-sa place (Art. 7). Ils sont consignés, jamais devinés. **Huit** arbitrages sont ouverts et ce registre
+sa place (Art. 7). Ils sont consignés, jamais devinés. **Neuf** arbitrages sont ouverts et ce registre
 les porte **tous** : `plan.md`, `tasks.md`, `research.md` et les contrats n'en rappellent que les
 incidences, sans les dupliquer (Art. 19).
 
@@ -456,3 +456,12 @@ incidences, sans les dupliquer (Art. 19).
   prévaloir le nommage `NNN-slug` sur le `feat/S09-catalog-fit` de `10b`. Les `Tn` de `9h` ne sont
   cités qu'en **référence de traçabilité**. Écart documentaire à corriger par amendement de `10b`
   (Art. 7, Art. 12).
+- **ARBITRAGE 9 — `10c` ne tranche pas le terme désignant la référence exacte d'une image.** Le
+  glossaire normatif n'en porte **aucune** entrée, alors que trois specs du même socle devaient le
+  nommer : S01 et S02 écrivaient `digest`, S03 écrivait « empreinte » — deux mots pour une même chose,
+  ce que l'Art. 12 interdit. Le terme retenu est **`digest`**, parce qu'il est celui de la
+  **constitution** (Art. 11 : « épinglée sur un tag exact ou un **digest** ») et celui du document
+  (`9f` T10 : « ports · digests ») ; « empreinte » est retiré des artefacts de S03. **Le nom de
+  fichier `deploy/digests.yml` de S01 reste inchangé** : un nom de fichier n'est pas un terme de
+  glossaire. Écart documentaire à corriger par amendement de `10c` (ajout de l'entrée) ; d'ici là,
+  aucun artefact n'introduit de synonyme.

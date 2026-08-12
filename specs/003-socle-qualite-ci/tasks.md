@@ -222,7 +222,7 @@ un changement introduisant une dépendance vulnérable, puis un changement dont 
       maillon et épinglage** : l'environnement éphémère est **entièrement détruit** — aucune
       ressource résiduelle entre deux exécutions ; un scénario de **charge** en échec fait échouer la
       chaîne et bloque la fusion ; **100 %** des actions, outils et images consommés par les étapes
-      sont épinglés par tag exact ou empreinte, et un référencement flottant introduit délibérément
+      sont épinglés par tag exact ou digest, et un référencement flottant introduit délibérément
       fait échouer la chaîne — *0.25 j* · **SC-007, SC-010, SC-011** · FR-017, FR-026, FR-027
 
 ### Implémentation US3
@@ -236,23 +236,26 @@ un changement introduisant une dépendance vulnérable, puis un changement dont 
       rien d'autre. Une étape qui redéclare un contrôle est un **constat de revue** (Art. 16) — c'est
       là que la divergence redeviendrait possible.
 - [ ] T023 [US3] Étiqueter dans `ci.yaml` les images **construites** de façon reproductible —
-      **version sémantique + empreinte du contenu** — pour rendre le retour arrière possible par
+      **version sémantique + digest du contenu** — pour rendre le retour arrière possible par
       simple ré-étiquetage — *0.25 j* · **FR-019** · Art. 11
       · consommées par **S01**
 - [ ] T024 [US3] Épingler dans `ci.yaml` **toutes les briques consommées** par ses étapes — actions,
-      outils, images de base — par tag exact ou empreinte ; jamais `:latest`, jamais une branche,
+      outils, images de base — par tag exact ou digest ; jamais `:latest`, jamais une branche,
       jamais un intervalle ouvert, et faire échouer la chaîne sur un référencement flottant —
       *0.25 j* · **FR-026** · **SC-011** · Art. 11
       · même règle que la garde locale T011, exprimée en **étape** : le refus doit survenir aux deux
       endroits
 - [ ] T025 [US3] Garantir dans `ci.yaml` qu'**aucune étape** ne dispose d'un GPU — l'environnement
       d'exécution n'en comporte pas — *0.25 j* · **FR-016** · Art. 8
-      · ⚠️ **quatre** exigences du projet **échappent donc à la chaîne** et sont prouvées au banc /
-      canari : cibles de collecte `up` et cartes rafraîchies (**S02** SC-001, SC-004 — **dès M0**),
-      découverte de topologie matérielle (**S06** SC-001), calibration du verdict de `fit` (**S09**
-      SC-001), débit additionné sur deux `host` (**S20** SC-001) — à dire dans les plans concernés
-      plutôt qu'à croire couvert ici. Liste unique :
-      [`contracts/quality-gates.md`](./contracts/quality-gates.md)
+      · ⚠️ **sept** preuves du projet **échappent donc à la chaîne**, pour **deux causes distinctes**.
+      **Cinq par le matériel**, prouvées au banc / canari (porte 5) : cibles de collecte `up` et
+      cartes rafraîchies (**S02** SC-001, SC-004 — **dès M0**), pile saine et exposition réseau sur
+      machine de référence (**S01** T011 — **dès M0**), découverte de topologie matérielle (**S06**
+      SC-001), calibration du verdict de `fit` (**S09** SC-001), débit additionné sur deux `host`
+      (**S20** SC-001). **Deux par un jugement humain**, qui ne sont pas des portes : installation par
+      une personne tierce (**S01** T015 — SC-004) et rejeu englobant des scénarios (**S01** T018) — à
+      dire dans les plans concernés plutôt qu'à croire couvert ici. Liste unique, avec le jalon et la
+      cause de chacune : [`contracts/quality-gates.md`](./contracts/quality-gates.md) contrat 5
 - [ ] T026 [US3] Ajouter dans `ci.yaml` la **sixième étape**, porte **unique** : parcours de **bout
       en bout ET charge** sur un **environnement éphémère complet** associé au moteur factice,
       **détruit en fin d'exécution** ; l'échec du volet de charge fait échouer la chaîne au même
@@ -426,8 +429,8 @@ stratégie optimale n'est donc pas séquentielle :
   explicitement dans la documentation de contribution ; le cycle rouge → vert reste dû pour tout
   comportement (Art. 10).
 - **Trois épinglages distincts, à ne pas confondre** : les **dépendances** par le verrou reproductible
-  (T001) · les images **construites** par version + empreinte (T023, FR-019) · les briques
-  **consommées** par la chaîne par tag exact ou empreinte (T011, T024, FR-026).
+  (T001) · les images **construites** par version + digest (T023, FR-019) · les briques
+  **consommées** par la chaîne par tag exact ou digest (T011, T024, FR-026).
 - Commits atomiques et conventionnels au **`scope` = spec** (Art. 14, `10b`) ; la configuration des
   portes étant versionnée, toute désactivation — y compris celle d'une garde de topologie ou
   d'épinglage — se lit en revue (Art. 16).
@@ -436,7 +439,7 @@ stratégie optimale n'est donc pas séquentielle :
 
 ## Arbitrages
 
-Les **huit** arbitrages ouverts sont consignés dans [`spec.md`](./spec.md), registre unique, et ne
+Les **neuf** arbitrages ouverts sont consignés dans [`spec.md`](./spec.md), registre unique, et ne
 sont pas dupliqués ici (Art. 19). Ne figurent ci-dessous que ceux qui ont une **incidence sur ce
 fichier** — dont les arbitrages **7** et **8**, propres au découpage en tâches, et dont ce fichier
 porte le détail chiffré.
@@ -449,3 +452,4 @@ porte le détail chiffré.
 | **4 — FR-017 et la dépendance à S01** | T026 consomme la définition d'environnement de S01, alors que `9c` donne S03 « Dépend de : — ». Aucune seconde définition d'environnement n'est créée ici (Art. 19). |
 | **7 — écart d'effort : 10.0 j contre ≈ 6.5 j** | La fiche `9h` porte « Total ≈ 6.5 j-agent » et `9c` « ≈ 1 sem ». L'écart de **+3.5 j** se réconcilie **exactement**, dans les deux sens : **+0.25** verrou reproductible T001, que la fiche ne détaille pas · **+2.75** **onze** tâches neuves à 0.25 j, postérieures ou latérales à la fiche — T006 `alembic check`, T007 bases éphémères, T008 `Makefile` comme définition unique, T010 garde de topologie, T011 et T024 gardes d'épinglage, T014 documentation de contribution, T016 paquet du moteur factice, T023 étiquetage des images construites, T025 absence de GPU, T027 minimum de charge · **+1.25** preuves portées de 0.5 j (`9h` T10 seul) à 1.75 j pour couvrir **onze** critères de succès au lieu de trois (T002, T003, T015, T020, T021, T028) · **+0.25** T029 `[INT]`, rejeu des 12 scénarios de `quickstart.md`, que la fiche ne détaille pas · **−1.00** **trois** tâches **moins** chères que la fiche (`9h` T6 1.0 j → T017 0.75 j ; `9h` T8 1.0 j → T022 0.5 j ; `9h` T9 1.0 j → T026 0.75 j). Soit 0.25 + 2.75 + 1.25 + 0.25 − 1.00 = **+3.5 j**, et 6.5 + 3.5 = **10.0 j** — la somme du tableau de phases ci-dessus. Le mainteneur doit trancher : amender la fiche `9h` et `9c`, ou réduire le périmètre — la profondeur M0 ne bouge pas (Art. 7, Art. 20). |
 | **8 — `10b` fixe « tâches : `S<nn>-T<n>` »** | Les identifiants de ce fichier sont au format Spec Kit (`T001`…), qui prévaut (précédent de l'Art. 23 sur `feat/S09-catalog-fit`). Écart documentaire à corriger par amendement de `10b` (Art. 7, Art. 12) ; les `Tn` de `9h` restent cités en **référence de traçabilité**. |
+| **9 — `10c` ne tranche pas le terme de la référence exacte d'une image** | T011, T023, T024 et les Notes écrivent **`digest`** (Art. 11, `9f` T10) ; « empreinte » est retiré. Aucune tâche ne change de périmètre ni d'effort : c'est un alignement de vocabulaire (Art. 12), pas de conception. |

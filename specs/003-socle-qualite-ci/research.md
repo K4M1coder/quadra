@@ -67,21 +67,21 @@ la pyramide** — c'est le cas limite le plus dangereux identifié dans la spec.
 exercés qu'au déploiement canari.
 
 **Rationale** : Art. 8. Un GPU dans la chaîne la rendrait coûteuse, lente et indisponible, et surtout
-**non reproductible** — les tests dépendraient d'un état matériel. Le prix à payer est que **quatre**
-exigences du projet échappent à la chaîne et doivent être prouvées au banc / canari :
+**non reproductible** — les tests dépendraient d'un état matériel. Le prix à payer est que **sept**
+preuves du projet échappent à la chaîne, pour **deux causes distinctes** : cinq par le **matériel**
+(elles restent des portes — la porte 5, au banc / canari), deux par un **jugement humain** (elles ne
+sont pas des portes : personne tierce, recette englobante — S01 T015 et T018). La liste, avec le
+jalon et la cause de chacune, est **unique** et vit dans
+[`contracts/quality-gates.md`](./contracts/quality-gates.md) contrat 5 (Art. 19) : ce fichier y
+renvoie et ne la recopie pas.
 
-| Exigence | Spec | Jalon | Pourquoi elle échappe à la chaîne |
-| --- | --- | --- | --- |
-| Cibles de collecte `up` et cartes rafraîchies | S02 (SC-001, SC-004) | **M0** | exige les moteurs et les cartes réelles |
-| Découverte de topologie matérielle | S06 (SC-001) | M1 | exige de vraies cartes appairées (`NVLink`) |
-| Calibration du verdict de `fit` | S09 (SC-001) | M2 | exige 20 modèles mesurés |
-| Débit additionné sur deux `host` | S20 (SC-001) | M4 | exige deux `host` réels |
-
-**L'exception commence dès M0**, pas à M1 : la ligne S02 est postérieure à la première rédaction de ce
-document et vient de la revue croisée de S02 (décision `DA-5` de cette spec). C'est le cas le plus
-gênant des quatre, parce que `9e` exige simultanément « dashboards GPU vivants » et « CI verte » **au
-même jalon** — la porte 5 de l'Art. 8 est donc mobilisée dès M0, et non seulement au canari de
-bascule.
+**L'exception commence dès M0**, pas à M1 : les lignes **S02** et les **trois lignes S01** sont
+postérieures à la première rédaction de ce document et viennent des revues croisées de S02 (décision
+`DA-5` de cette spec) puis de S01. La ligne S02 est le cas le plus gênant, parce que `9e` exige
+simultanément « dashboards GPU vivants » et « CI verte » **au même jalon** — la porte 5 de l'Art. 8
+est donc mobilisée dès M0, et non seulement au canari de bascule. Les lignes S01 sont d'une autre
+nature : deux d'entre elles ne franchiront **jamais** aucune porte mécanique, quelle que soit la
+maturité de la chaîne.
 
 **Ce point doit être dit explicitement** dans les plans concernés plutôt que laissé implicite — sans
 quoi on croira ces critères couverts par la chaîne.
@@ -184,7 +184,7 @@ Les scénarios eux-mêmes vivent dans `k6/<lane>-<scénario>.js` (`10b`) et sont
 ## D-S03-8 — La définition de la chaîne est épinglée comme ce qu'elle produit
 
 **Décision** : chaque action, outil ou image qu'une étape **consomme** est référencée par tag exact ou
-empreinte. Un référencement flottant — `:latest`, une branche, un intervalle ouvert — fait échouer la
+digest. Un référencement flottant — `:latest`, une branche, un intervalle ouvert — fait échouer la
 chaîne. Le contrôle tourne en **porte locale** et en **étape**, pour que le refus survienne avant
 l'envoi.
 
@@ -194,7 +194,7 @@ elle-même flotte, et l'on obtient une chaîne non reproductible qui garde des a
 reproductibles. SC-011 exige 100 % : la porte ne connaît pas d'exception.
 
 **Trois épinglages à ne pas confondre** : dépendances (verrou reproductible) · images **construites**
-(version + empreinte, FR-019) · briques **consommées** par la chaîne (FR-026).
+(version + digest, FR-019) · briques **consommées** par la chaîne (FR-026).
 
 **Alternatives considérées** :
 
@@ -206,13 +206,14 @@ reproductibles. SC-011 exige 100 % : la porte ne connaît pas d'exception.
 
 ## Points non tranchés
 
-Ils ne sont pas des décisions et ne figurent pas ci-dessus. Les **huit** arbitrages ouverts sont
+Ils ne sont pas des décisions et ne figurent pas ci-dessus. Les **neuf** arbitrages ouverts sont
 consignés dans [`spec.md`](./spec.md), section « Arbitrages en attente » — registre unique —, et
 rappelés par leurs incidences dans [`plan.md`](./plan.md) et [`tasks.md`](./tasks.md) : forge et
 exécuteur (1) · rattachement de `alembic check` à S03 ou S04 (2) · chemin du guide du contributeur (3) ·
 FR-017 et la dépendance à S01 (4) · amendement de `10a` si les portes doivent devenir des entités (5) ·
 `10a` annonce 22 articles au lieu de 23 (6) · écart d'effort 10.0 j contre « ≈ 6.5 j » (7) · `10b` fixe
-« tâches : `S<nn>-T<n>` » quand le format Spec Kit prévaut (8).
+« tâches : `S<nn>-T<n>` » quand le format Spec Kit prévaut (8) · `10c` ne porte aucune entrée pour la
+référence exacte d'une image, terme retenu **`digest`** d'après l'Art. 11 et `9f` T10 (9).
 
 ---
 

@@ -128,7 +128,7 @@ Référence : [`specs/RESEARCH-STACK.md`](../RESEARCH-STACK.md), §7. Elle n'est
 | 8 | Qualité mécanique | ✅ | **Article central.** S03 outille les portes **1 à 4** dans l'ordre, **charge comprise** (porte 4 : « e2e + charge sur compose éphémère »), avec blocage de fusion ; la porte 5 (canari GPU) reste hors chaîne. Les **trois chemins** à revue humaine — auth, facturation, proxy streaming — sont rendus visibles dans le processus. |
 | 9 | Simplicité | ✅ | Un seul ordre de portes, un seul jeu de seuils, un seul moteur factice, une seule surface d'invocation — pas de variante par versant. |
 | 10 | Tests d'abord | ✅ | **Article central.** Les **5 niveaux posables à M0** sont outillés (FR-021) ; les 4 autres sont rendus exécutables par les specs qui les produisent, sans anticipation (Art. 20). Les seuils sont **mesurés** par l'outillage et leurs sorties **capturées** — « un chiffre **annoncé** sans sortie capturée est une opinion, **pas une couverture** » (FR-015, FR-024). La preuve (réf. `9h` T10) est écrite rouge avant les portes (FR-025). |
-| 11 | Rien ne flotte | ✅ | Trois épinglages, pas un : verrou de dépendances reproductible ; images construites étiquetées version + empreinte (FR-019), condition du retour arrière ; **briques consommées par la chaîne** — actions, outils, images — épinglées par tag exact ou empreinte, un référencement flottant faisant échouer la chaîne (FR-026, SC-011). |
+| 11 | Rien ne flotte | ✅ | Trois épinglages, pas un : verrou de dépendances reproductible ; images construites étiquetées version + digest (FR-019), condition du retour arrière ; **briques consommées par la chaîne** — actions, outils, images — épinglées par tag exact ou digest, un référencement flottant faisant échouer la chaîne (FR-026, SC-011). |
 | 12 | Langage ubiquitaire | ✅ | Nommage des tests et des étapes aligné sur le vocabulaire du domaine ; les identifiants de `10b` sont employés tels quels — `lane` dans `k6/<lane>-<scénario>.js`, `scope` = spec dans les messages de validation. |
 | 13 | Doc et changelog | ✅ | Convention de commits → journal des modifications généré (Keep a Changelog, `10b`). |
 | 14 | Histoire atomique, hooks = CI | ✅ | **Article central.** FR-002 : portes locales ≡ portes de la chaîne pour les rangs 1 à 3, obtenu par **définition unique** versionnée et invoquée de part et d'autre (FR-020, SC-005) — l'article exige l'équivalence, pas un mécanisme de comparaison. Commits conventionnels au `scope` = spec, vérifiés mécaniquement (FR-004). |
@@ -273,19 +273,23 @@ J4 exige les trois.
 - **Bases éphémères aux majeures de production.** Conséquence de D1 : tester contre une majeure
   antérieure ferait passer des tests qui échoueraient en production.
 - **Aucun accès GPU dans la chaîne.** Contrainte d'architecture. Le moteur factice existe précisément
-  pour cela. **Quatre** exigences du projet échappent donc à la chaîne et sont prouvées au banc /
-  canari — cibles de collecte `up` et cartes rafraîchies (S02, **dès M0**), découverte de topologie
-  matérielle (S06), calibration du verdict de `fit` (S09), débit additionné sur deux `host` (S20) : à
-  dire dans les plans concernés plutôt qu'à croire couvert ici. La liste unique vit dans
-  [`contracts/quality-gates.md`](./contracts/quality-gates.md) (Art. 19) ; toute spec qui en découvre
-  une l'y ajoute.
+  pour cela. **Sept** preuves du projet échappent donc à la chaîne, pour **deux causes que l'Art. 8
+  ne traite pas pareil** : **cinq par le matériel** — cibles de collecte `up` et cartes rafraîchies
+  (S02, **dès M0**), pile saine et exposition réseau sur machine de référence (S01 T011, **dès M0**),
+  découverte de topologie matérielle (S06), calibration du verdict de `fit` (S09), débit additionné
+  sur deux `host` (S20) —, qui restent des **portes 5** ; et **deux par un jugement humain** —
+  installation par une personne tierce (S01 T015) et rejeu englobant des scénarios (S01 T018) —, qui
+  ne sont **pas** des portes et ne le deviendront pas. À dire dans les plans concernés plutôt qu'à
+  croire couvert ici. La liste unique, avec le jalon et la cause de chacune, vit dans
+  [`contracts/quality-gates.md`](./contracts/quality-gates.md) contrat 5 (Art. 19) ; toute spec qui
+  en découvre une l'y ajoute.
 - **Trois épinglages distincts, à ne pas confondre.**
   1. Les **dépendances** sont épinglées par le verrou reproductible.
-  2. Les **images construites** sont étiquetées version + empreinte (FR-019) — c'est ce qui rend le
+  2. Les **images construites** sont étiquetées version + digest (FR-019) — c'est ce qui rend le
      retour arrière possible par ré-étiquetage (Art. 11), en articulation avec S01 qui consomme ces
      images.
   3. Les **briques consommées par la chaîne** — actions, outils, images de base des étapes — sont
-     référencées par tag exact ou empreinte (FR-026). Un contrôle refuse `:latest`, une branche ou un
+     référencées par tag exact ou digest (FR-026). Un contrôle refuse `:latest`, une branche ou un
      intervalle ouvert dans la définition de chaîne ; il tourne en porte locale **et** en étape, pour
      que le refus survienne avant l'envoi. SC-011 exige 100 % : la porte ne connaît pas d'exception.
 - **La charge est une porte, pas une mesure indicative.** Le dernier maillon de la chaîne est
@@ -330,7 +334,7 @@ J4 exige les trois.
 
 ## Arbitrages
 
-Les **huit** arbitrages ouverts sont consignés dans [`spec.md`](./spec.md), registre unique, et ne sont
+Les **neuf** arbitrages ouverts sont consignés dans [`spec.md`](./spec.md), registre unique, et ne sont
 pas dupliqués ici (Art. 19). Ne figurent ci-dessous que ceux qui ont une incidence sur ce plan — les
 arbitrages **7** (écart d'effort) et **8** (format des identifiants de tâches) n'en ont aucune : ils
 portent sur `tasks.md`, qui en détaille l'incidence.
@@ -343,6 +347,7 @@ portent sur `tasks.md`, qui en détaille l'incidence.
 | **4 — FR-017 et la dépendance à S01** | L'étape de bout en bout et charge consomme la définition d'environnement de S01, alors que `9c` donne S03 « Dépend de : — ». Le plan ne crée pas de seconde définition d'environnement (Art. 19). |
 | **5 — amendement de `10a` si les portes deviennent des entités** | Le Constitution Check (Art. 17) est franchi **parce que** portes, seuils et étapes ne sont pas modélisés. Les modéliser exigerait l'amendement d'abord. |
 | **6 — `10a` annonce « Constitution (22 articles) »** | Le Constitution Check de ce plan porte **23 lignes**, Art. 23 inclus. Aucun artefact ne recopie le chiffre 22. |
+| **9 — `10c` ne tranche pas le terme de la référence exacte d'une image** | Terme retenu **`digest`** (Art. 11, `9f` T10) : « empreinte » est retiré de la ligne Art. 11 et des consignes de ce plan. Le nom de fichier `deploy/digests.yml` de S01 reste inchangé. |
 
 ## Complexity Tracking
 
